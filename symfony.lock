@@ -82,8 +82,26 @@
     "doctrine/sql-formatter": {
         "version": "1.1.1"
     },
+    "fresh/doctrine-enum-bundle": {
+        "version": "7.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "master",
+            "version": "6.0",
+            "ref": "fab86661c13bc12e4f14f706c86af09912d55bfb"
+        },
+        "files": [
+            "./src/DBAL/Types/.gitignore"
+        ]
+    },
     "friendsofphp/proxy-manager-lts": {
         "version": "v1.0.5"
+    },
+    "google/protobuf": {
+        "version": "v3.10.0"
+    },
+    "gtfs/realtime-php": {
+        "version": "v1.0.0"
     },
     "laminas/laminas-code": {
         "version": "4.4.3"
@@ -95,6 +113,9 @@
         "version": "1.0.1"
     },
     "psr/container": {
+        "version": "1.0.0"
+    },
+    "psr/event-dispatcher": {
         "version": "1.0.0"
     },
     "psr/log": {
@@ -121,9 +142,6 @@
             "./bin/console",
             "./config/bootstrap.php"
         ]
-    },
-    "symfony/debug": {
-        "version": "v4.4.31"
     },
     "symfony/dependency-injection": {
         "version": "v4.4.33"
@@ -203,11 +221,8 @@
             "ref": "fadbfe33303a76e25cb63401050439aa9b1a9c7f"
         }
     },
-    "symfony/mime": {
-        "version": "v4.4.31"
-    },
-    "symfony/polyfill-intl-idn": {
-        "version": "v1.23.0"
+    "symfony/polyfill-intl-grapheme": {
+        "version": "v1.23.1"
     },
     "symfony/polyfill-intl-normalizer": {
         "version": "v1.23.0"
@@ -250,6 +265,25 @@
     "symfony/stopwatch": {
         "version": "v4.4.27"
     },
+    "symfony/string": {
+        "version": "v5.3.10"
+    },
+    "symfony/translation-contracts": {
+        "version": "v2.4.0"
+    },
+    "symfony/validator": {
+        "version": "5.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "master",
+            "version": "4.3",
+            "ref": "3eb8df139ec05414489d55b97603c5f6ca0c44cb"
+        },
+        "files": [
+            "./config/packages/validator.yaml",
+            "./config/packages/test/validator.yaml"
+        ]
+    },
     "symfony/var-dumper": {
         "version": "v4.4.33"
     },
@@ -261,5 +295,8 @@
     },
     "trafiklab/gtfs-php-sdk": {
         "version": "dev-master"
+    },
+    "twig/twig": {
+        "version": "v3.3.3"
     }
 }
