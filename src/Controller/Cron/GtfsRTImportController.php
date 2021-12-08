@@ -22,11 +22,11 @@ class GtfsRTImportController extends AbstractController
     /**
      * @Route("/cron/gtfs/rt/vehicleposition", name="cron_gtfs_rt_vehicleposition")
      */
-    public function index(ParameterBagInterface $params, EntityManagerInterface $em): Response
+    public function index(EntityManagerInterface $em): Response
     {
 
         //https://github.com/trafiklab/gtfs-php-sdk
-        $feedUrl = $params->get('app.gtfs.rt.url');
+        $feedUrl = $this->getParameter('app.gtfs.rt.url');
 
         $pbfContent = file_get_contents($feedUrl);
         $feedMessage = new FeedMessage();
