@@ -6,6 +6,7 @@ use App\Repository\GtfsRT\VehiclePositionRepository;
 use Doctrine\ORM\Mapping as ORM;
 use App\Lib\Enum\VehiclePositionStatusEnum;
 use Fresh\DoctrineEnumBundle\Validator\Constraints as DoctrineAssert;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ORM\Entity(repositoryClass=VehiclePositionRepository::class)
@@ -16,6 +17,7 @@ use Fresh\DoctrineEnumBundle\Validator\Constraints as DoctrineAssert;
  * uniqueConstraints={
  *  @ORM\UniqueConstraint(name="vehicle_id", columns={"gtfs_vehicle_id"} )
  * })
+ * @Gedmo\Loggable
  */
 class VehiclePosition
 {
@@ -28,6 +30,7 @@ class VehiclePosition
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Gedmo\Versioned
      */
     private $gtfsVehicleId;
 
@@ -48,12 +51,14 @@ class VehiclePosition
 
     /**
      * @ORM\Column(type="integer")
+     * @Gedmo\Versioned
      */
     private $gtfsStopId;
 
     /**
      * @ORM\Column(type="VehiclePositionStatusEnum")
      * DoctrineAssert\Enum(entity="App\Lib\Enum\VehiclePositionStatusEnum")   
+     * @Gedmo\Versioned
      */
     private $currentStatus = 0;
 
