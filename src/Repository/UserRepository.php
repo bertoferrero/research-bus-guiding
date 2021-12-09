@@ -36,6 +36,22 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->_em->flush();
     }
 
+    /**
+     * Genera un token único para este usuario comprobando que no exista ya uno igual
+     *
+     * @param integer $length
+     * @return void
+     */
+    public function generateUniqueToken($length = 128)
+    {
+        $existingUser = null;
+        do {
+            $token = bin2hex(random_bytes($length));
+            $existingUser = $this->findOneBy(['token' => $token]);
+        } while ($existingUser != null);
+        return $token;
+    }
+
     // /**
     //  * @return User[] Returns an array of User objects
     //  */

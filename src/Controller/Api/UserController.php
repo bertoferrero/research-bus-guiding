@@ -9,11 +9,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-#[Route('/login')]
-class ApiLoginController extends AbstractController
+#[Route('/user')]
+class UserController extends AbstractController
 {
-    #[Route('/', name: 'api_login', methods: ['POST'])]
-    public function loginAction(#[CurrentUser] ?User $user, EntityManagerInterface $em): Response
+    #[Route('/', name: 'api_user', methods: ['GET'])]
+    public function loginAction(#[CurrentUser] ?User $user): Response
     {
         if (null === $user) {
             return $this->json([
@@ -21,14 +21,8 @@ class ApiLoginController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $token = $em->getRepository(User::class)->generateUniqueToken(); // somehow create an API token for $user
-        $user->setToken($token);
-        $em->persist($user);
-        $em->flush();
-
         return $this->json([
-            'user'  => $user->getUserIdentifier(),
-            'token' => $token,
+            'user'  => $user->getUserIdentifier()
         ]);
     }
 }
