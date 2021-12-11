@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entity\Gtfs;
+namespace App\Entity\ServiceData;
 
-use App\Repository\Gtfs\StopRepository;
+use App\Repository\ServiceData\StopRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass=StopRepository::class)
  * @ORM\Table(uniqueConstraints={
- *  @ORM\UniqueConstraint(name="stop_gtfs_id", columns={"gtfs_id"} )
+ *  @ORM\UniqueConstraint(name="stop_schema_id", columns={"schema_id"} )
  * })
  */
 class Stop
@@ -25,7 +25,7 @@ class Stop
     /**
      * @ORM\Column(type="integer")
      */
-    private $gtfsId;
+    private $schemaId;
 
     /**
      * @ORM\Column(type="float")
@@ -62,14 +62,14 @@ class Stop
         return $this->id;
     }
 
-    public function getGtfsId(): ?int
+    public function getschemaId(): ?int
     {
-        return $this->gtfsId;
+        return $this->schemaId;
     }
 
-    public function setGtfsId(int $gtfsId): self
+    public function setschemaId(int $schemaId): self
     {
-        $this->gtfsId = $gtfsId;
+        $this->schemaId = $schemaId;
 
         return $this;
     }

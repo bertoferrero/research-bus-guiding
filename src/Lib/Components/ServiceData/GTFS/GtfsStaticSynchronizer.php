@@ -3,11 +3,11 @@ namespace App\Lib\Components\ServiceData\GTFS;
 
 
 use DateTime;
-use App\Entity\Gtfs\Stop;
-use App\Entity\Gtfs\Trip;
-use App\Entity\Gtfs\StopTime;
+use App\Entity\ServiceData\Stop;
+use App\Entity\ServiceData\Trip;
+use App\Entity\ServiceData\StopTime;
 use Trafiklab\Gtfs\Model\GtfsArchive;
-use App\Entity\Gtfs\Route as GtfsRoute;
+use App\Entity\ServiceData\Route as GtfsRoute;
 use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
 
 class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer{
@@ -31,7 +31,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer{
         $stops = $gtfsArchive->getStopsFile()->getStops();
         foreach ($stops as $stopData) {
             $stop = new Stop();
-            $stop->setGtfsId((int)$stopData->getStopId());
+            $stop->setschemaId((int)$stopData->getStopId());
             $stop->setLatitude((float)$stopData->getStopLat());
             $stop->setLongitude((float)$stopData->getStopLon());
             $stop->setName($stopData->getStopName());
@@ -44,7 +44,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer{
         $routes = $gtfsArchive->getRoutesFile()->getRoutes();
         foreach ($routes as $routeData) {
             $route = new GtfsRoute();
-            $route->setGtfsId($routeData->getRouteId());
+            $route->setschemaId($routeData->getRouteId());
             $route->setName($routeData->getRouteLongName());
             $route->setColor($routeData->getRouteTextColor());
             $this->em->persist($route);
@@ -56,9 +56,9 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer{
         $routeRepo = $this->em->getRepository(GtfsRoute::class);
         foreach($trips as $tripData){
             $trip = new Trip();
-            $trip->setGtfsId($tripData->getTripId());
-            $trip->setGtfsRouteId($tripData->getRouteId());
-            $route = $routeRepo->findOneBy(['gtfsId' => $tripData->getRouteId()]);
+            $trip->setschemaId($tripData->getTripId());
+            $trip->setschemaRouteId($tripData->getRouteId());
+            $route = $routeRepo->findOneBy(['schemaId' => $tripData->getRouteId()]);
             $trip->setRoute($route);
             $this->em->persist($trip);
         }
@@ -70,15 +70,15 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer{
         $stopRepo = $this->em->getRepository(Stop::class);
         foreach($stopTimes as $stopTimeData){
             $stopTime = new StopTime();
-            $stopTime->setGtfsTripId($stopTimeData->getTripId());
-            $trip = $tripRepo->findOneBy(['gtfsId' => $stopTimeData->getTripId()]);
+            $stopTime->setschemaTripId($stopTimeData->getTripId());
+            $trip = $tripRepo->findOneBy(['schemaId' => $stopTimeData->getTripId()]);
             $stopTime->setTrip($trip);
             $stopTime->setArrivalTime(new DateTime($stopTimeData
             ->getArrivalTime()));
             $stopTime->setDepartureTime(new DateTime($stopTimeData
             ->getDepartureTime()));
-            $stopTime->setGtfsStopId($stopTimeData->getStopId());
-            $stop = $stopRepo->findOneBy(['gtfsId' => $stopTimeData->getStopId()]);
+            $stopTime->setschemaStopId($stopTimeData->getStopId());
+            $stop = $stopRepo->findOneBy(['schemaId' => $stopTimeData->getStopId()]);
             $stopTime->setStop($stop);
             $stopTime->setStopSequence((int)$stopTimeData->getStopSequence());
             $this->em->persist($stopTime);

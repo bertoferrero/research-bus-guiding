@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entity\GtfsRT;
+namespace App\Entity\ServiceData;
 
-use App\Repository\GtfsRT\VehiclePositionRepository;
+use App\Repository\ServiceData\VehiclePositionRepository;
 use Doctrine\ORM\Mapping as ORM;
 use App\Lib\Enum\VehiclePositionStatusEnum;
 use Fresh\DoctrineEnumBundle\Validator\Constraints as DoctrineAssert;
@@ -11,11 +11,11 @@ use Gedmo\Mapping\Annotation as Gedmo;
 /**
  * @ORM\Entity(repositoryClass=VehiclePositionRepository::class)
  * @ORM\Table(indexes={
- *     @ORM\Index(name="vehicle_trip_id", columns={"gtfs_trip_id"}),
- *     @ORM\Index(name="vehicle_stop_id", columns={"gtfs_stop_id"}),
+ *     @ORM\Index(name="vehicle_trip_id", columns={"schema_trip_id"}),
+ *     @ORM\Index(name="vehicle_stop_id", columns={"schema_stop_id"}),
  * },
  * uniqueConstraints={
- *  @ORM\UniqueConstraint(name="vehicle_id", columns={"gtfs_vehicle_id"} )
+ *  @ORM\UniqueConstraint(name="vehicle_id", columns={"schema_vehicle_id"} )
  * })
  * @Gedmo\Loggable
  */
@@ -32,7 +32,7 @@ class VehiclePosition
      * @ORM\Column(type="string", length=255)
      * @Gedmo\Versioned
      */
-    private $gtfsVehicleId;
+    private $schemaVehicleId;
 
     /**
      * @ORM\Column(type="float")
@@ -47,13 +47,13 @@ class VehiclePosition
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $gtfsTripId;
+    private $schemaTripId;
 
     /**
      * @ORM\Column(type="integer")
      * @Gedmo\Versioned
      */
-    private $gtfsStopId;
+    private $schemaStopId;
 
     /**
      * @ORM\Column(type="VehiclePositionStatusEnum")
@@ -67,14 +67,14 @@ class VehiclePosition
         return $this->id;
     }
 
-    public function getGtfsVehicleId(): ?string
+    public function getschemaVehicleId(): ?string
     {
-        return $this->gtfsVehicleId;
+        return $this->schemaVehicleId;
     }
 
-    public function setGtfsVehicleId(string $gtfsVehicleId): self
+    public function setschemaVehicleId(string $schemaVehicleId): self
     {
-        $this->gtfsVehicleId = $gtfsVehicleId;
+        $this->schemaVehicleId = $schemaVehicleId;
 
         return $this;
     }
@@ -103,26 +103,26 @@ class VehiclePosition
         return $this;
     }
 
-    public function getGtfsTripId(): ?string
+    public function getschemaTripId(): ?string
     {
-        return $this->gtfsTripId;
+        return $this->schemaTripId;
     }
 
-    public function setGtfsTripId(string $gtfsTripId): self
+    public function setschemaTripId(string $schemaTripId): self
     {
-        $this->gtfsTripId = $gtfsTripId;
+        $this->schemaTripId = $schemaTripId;
 
         return $this;
     }
 
-    public function getGtfsStopId(): ?int
+    public function getschemaStopId(): ?int
     {
-        return $this->gtfsStopId;
+        return $this->schemaStopId;
     }
 
-    public function setGtfsStopId(int $gtfsStopId): self
+    public function setschemaStopId(int $schemaStopId): self
     {
-        $this->gtfsStopId = $gtfsStopId;
+        $this->schemaStopId = $schemaStopId;
 
         return $this;
     }

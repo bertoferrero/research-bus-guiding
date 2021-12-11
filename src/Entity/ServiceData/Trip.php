@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entity\Gtfs;
+namespace App\Entity\ServiceData;
 
-use App\Repository\Gtfs\TripRepository;
+use App\Repository\ServiceData\TripRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass=TripRepository::class)
  * @ORM\Table(uniqueConstraints={
- *  @ORM\UniqueConstraint(name="trip_gtfs_id", columns={"gtfs_id"} )
+ *  @ORM\UniqueConstraint(name="trip_schema_id", columns={"schema_id"} )
  * })
  */
 class Trip
@@ -25,12 +25,12 @@ class Trip
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $gtfsId;
+    private $schemaId;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $gtfsRouteId;
+    private $schemaRouteId;
 
     /**
      * @ORM\ManyToOne(targetEntity=Route::class, inversedBy="trips")
@@ -53,26 +53,26 @@ class Trip
         return $this->id;
     }
 
-    public function getGtfsId(): ?string
+    public function getschemaId(): ?string
     {
-        return $this->gtfsId;
+        return $this->schemaId;
     }
 
-    public function setGtfsId(string $gtfsId): self
+    public function setschemaId(string $schemaId): self
     {
-        $this->gtfsId = $gtfsId;
+        $this->schemaId = $schemaId;
 
         return $this;
     }
 
-    public function getGtfsRouteId(): ?string
+    public function getschemaRouteId(): ?string
     {
-        return $this->gtfsRouteId;
+        return $this->schemaRouteId;
     }
 
-    public function setGtfsRouteId(string $gtfsRouteId): self
+    public function setschemaRouteId(string $schemaRouteId): self
     {
-        $this->gtfsRouteId = $gtfsRouteId;
+        $this->schemaRouteId = $schemaRouteId;
 
         return $this;
     }

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Repository\GtfsRT;
+namespace App\Repository\ServiceData;
 
-use App\Entity\GtfsRT\VehiclePosition;
+use App\Entity\ServiceData\VehiclePosition;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

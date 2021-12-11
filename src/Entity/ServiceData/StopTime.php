@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Entity\Gtfs;
+namespace App\Entity\ServiceData;
 
-use App\Repository\Gtfs\StopTimeRepository;
+use App\Repository\ServiceData\StopTimeRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=StopTimeRepository::class)
  * @ORM\Table(indexes={
- *     @ORM\Index(name="time_trip_id", columns={"gtfs_trip_id"}),
- *     @ORM\Index(name="time_stop_id", columns={"gtfs_stop_id"}),
+ *     @ORM\Index(name="time_trip_id", columns={"schema_trip_id"}),
+ *     @ORM\Index(name="time_stop_id", columns={"schema_stop_id"}),
  * })
  */
 class StopTime
@@ -24,7 +24,7 @@ class StopTime
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $gtfsTripId;
+    private $schemaTripId;
 
     /**
      * @ORM\ManyToOne(targetEntity=Trip::class, inversedBy="stopTimes")
@@ -45,7 +45,7 @@ class StopTime
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $gtfsStopId;
+    private $schemaStopId;
 
     /**
      * @ORM\ManyToOne(targetEntity=Stop::class, inversedBy="stopTimes")
@@ -63,14 +63,14 @@ class StopTime
         return $this->id;
     }
 
-    public function getGtfsTripId(): ?string
+    public function getschemaTripId(): ?string
     {
-        return $this->gtfsTripId;
+        return $this->schemaTripId;
     }
 
-    public function setGtfsTripId(string $gtfsTripId): self
+    public function setschemaTripId(string $schemaTripId): self
     {
-        $this->gtfsTripId = $gtfsTripId;
+        $this->schemaTripId = $schemaTripId;
 
         return $this;
     }
@@ -111,14 +111,14 @@ class StopTime
         return $this;
     }
 
-    public function getGtfsStopId(): ?string
+    public function getschemaStopId(): ?string
     {
-        return $this->gtfsStopId;
+        return $this->schemaStopId;
     }
 
-    public function setGtfsStopId(string $gtfsStopId): self
+    public function setschemaStopId(string $schemaStopId): self
     {
-        $this->gtfsStopId = $gtfsStopId;
+        $this->schemaStopId = $schemaStopId;
 
         return $this;
     }

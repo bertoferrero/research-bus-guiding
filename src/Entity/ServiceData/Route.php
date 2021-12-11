@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entity\Gtfs;
+namespace App\Entity\ServiceData;
 
-use App\Repository\Gtfs\RouteRepository;
+use App\Repository\ServiceData\RouteRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass=RouteRepository::class)
  * @ORM\Table(uniqueConstraints={
- *  @ORM\UniqueConstraint(name="route_gtfs_id", columns={"gtfs_id"} )
+ *  @ORM\UniqueConstraint(name="route_schema_id", columns={"schema_id"} )
  * })
  */
 class Route
@@ -25,7 +25,7 @@ class Route
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $gtfsId;
+    private $schemaId;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -52,14 +52,14 @@ class Route
         return $this->id;
     }
 
-    public function getGtfsId(): ?string
+    public function getschemaId(): ?string
     {
-        return $this->gtfsId;
+        return $this->schemaId;
     }
 
-    public function setGtfsId(string $gtfsId): self
+    public function setschemaId(string $schemaId): self
     {
-        $this->gtfsId = $gtfsId;
+        $this->schemaId = $schemaId;
 
         return $this;
     }

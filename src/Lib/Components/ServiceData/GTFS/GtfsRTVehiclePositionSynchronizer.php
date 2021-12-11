@@ -2,8 +2,8 @@
 namespace App\Lib\Components\ServiceData\GTFS;
 
 
-use App\Entity\GtfsRT\VehiclePosition;
 use Google\Transit\Realtime\FeedMessage;
+use App\Entity\ServiceData\VehiclePosition;
 use App\Lib\Enum\VehiclePositionStatusEnum;
 use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
 
@@ -28,15 +28,15 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
             //Recogemos el vehicle y procesamos la entidad
             $vehicle = $entity->getVehicle();
             $vehicleId = $vehicle->getVehicle()->getId();
-            $vehicleEntity = $vehiclePositionRepo->findOneBy(['gtfsVehicleId' => $vehicleId]);
+            $vehicleEntity = $vehiclePositionRepo->findOneBy(['schemaVehicleId' => $vehicleId]);
             if ($vehicleEntity == null) {
                 $vehicleEntity = new VehiclePosition();
-                $vehicleEntity->setGtfsVehicleId($vehicleId);
+                $vehicleEntity->setschemaVehicleId($vehicleId);
             }
             $vehicleEntity->setLatitude((float)$vehicle->getPosition()->getLatitude());
             $vehicleEntity->setLongitude((float)$vehicle->getPosition()->getLongitude());
-            $vehicleEntity->setGtfsTripId($vehicle->getTrip()->getTripId());
-            $vehicleEntity->setGtfsStopId($vehicle->getStopId());
+            $vehicleEntity->setschemaTripId($vehicle->getTrip()->getTripId());
+            $vehicleEntity->setschemaStopId($vehicle->getStopId());
             $vehicleEntity->setCurrentStatus($this->transformCurrentStatus($vehicle->getCurrentStatus()));
             $this->em->persist($vehicleEntity);
             $workingVehicles[] = $vehicleId;
@@ -45,7 +45,7 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
 
         //Borramos los vehiculos que ya no están en funcionamiento, por limpieza
         $query = $this->em->createQueryBuilder();
-        $query->delete(VehiclePosition::class, 'v')->andWhere('v.gtfsVehicleId NOT IN (:vehicles)')->setParameter('vehicles', $workingVehicles)->getQuery()->execute();
+        $query->delete(VehiclePosition::class, 'v')->andWhere('v.schemaVehicleId NOT IN (:vehicles)')->setParameter('vehicles', $workingVehicles)->getQuery()->execute();
     }
 
     protected function transformCurrentStatus(int $currentStatus): string

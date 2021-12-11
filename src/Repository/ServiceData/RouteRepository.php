@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Repository\Gtfs;
+namespace App\Repository\ServiceData;
 
-use App\Entity\Gtfs\Route;
+use App\Entity\ServiceData\Route;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
