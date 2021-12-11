@@ -1,32 +1,20 @@
 <?php
+namespace App\Lib\Components\ServiceData\GTFS;
 
-namespace App\Controller\Cron;
 
-use DateTime;
-use App\Entity\Gtfs\Stop;
-use App\Entity\Gtfs\Trip;
-use App\Entity\Gtfs\StopTime;
-use Trafiklab\Gtfs\Model\GtfsArchive;
-use App\Entity\Gtfs\Route as GtfsRoute;
 use App\Entity\GtfsRT\VehiclePosition;
-use App\Lib\Enum\VehiclePositionStatusEnum;
-use Doctrine\ORM\EntityManagerInterface;
 use Google\Transit\Realtime\FeedMessage;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use App\Lib\Enum\VehiclePositionStatusEnum;
+use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
 
-class GtfsRTImportController extends AbstractController
+
+class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
 {
-    /**
-     * @Route("/cron/gtfs/rt/vehicleposition", name="cron_gtfs_rt_vehicleposition")
-     */
-    public function index(EntityManagerInterface $em): Response
+    public function executeSync()
     {
 
         //https://github.com/trafiklab/gtfs-php-sdk
-        $feedUrl = $this->getParameter('app.gtfs.rt.url');
+        $feedUrl = $this->params->get('app.gtfs.rt.url');
 
         $pbfContent = file_get_contents($feedUrl);
         $feedMessage = new FeedMessage();
@@ -34,7 +22,7 @@ class GtfsRTImportController extends AbstractController
 
         //Recorremos cada elemento
         $entities = $feedMessage->getEntity();
-        $vehiclePositionRepo = $em->getRepository(VehiclePosition::class);
+        $vehiclePositionRepo = $this->em->getRepository(VehiclePosition::class);
         $workingVehicles = [];
         foreach ($entities as $entity) {
             //Recogemos el vehicle y procesamos la entidad
@@ -50,17 +38,14 @@ class GtfsRTImportController extends AbstractController
             $vehicleEntity->setGtfsTripId($vehicle->getTrip()->getTripId());
             $vehicleEntity->setGtfsStopId($vehicle->getStopId());
             $vehicleEntity->setCurrentStatus($this->transformCurrentStatus($vehicle->getCurrentStatus()));
-            $em->persist($vehicleEntity);
+            $this->em->persist($vehicleEntity);
             $workingVehicles[] = $vehicleId;
         }
-        $em->flush();
+        $this->em->flush();
 
         //Borramos los vehiculos que ya no están en funcionamiento, por limpieza
-        $query = $em->createQueryBuilder();
+        $query = $this->em->createQueryBuilder();
         $query->delete(VehiclePosition::class, 'v')->andWhere('v.gtfsVehicleId NOT IN (:vehicles)')->setParameter('vehicles', $workingVehicles)->getQuery()->execute();
-
-
-        return new Response('ok');
     }
 
     protected function transformCurrentStatus(int $currentStatus): string

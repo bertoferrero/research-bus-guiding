@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
+    app.component.servicedatasync.static: '%env(SERVICEDATA_STATIC_SYNC)%'
+    app.component.servicedatasync.vehicleposition: '%env(SERVICEDATA_VEHICLEPOSITION_SYNC)%'
     app.gtfs.static.url: '%env(GTFS_STATIC_URL)%'
     app.gtfs.rt.url: '%env(GTFS_RT_URL)%'
 
