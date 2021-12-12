@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -39,6 +41,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\Column(type="string", length=256, nullable=true, unique=true)
      */
     private $token;
+
+    /**
+     * @ORM\OneToMany(targetEntity=UserNotificationTopicSubscription::class, mappedBy="user", orphanRemoval=true, cascade={"persist", "remove"})
+     */
+    private $notificationTopicSubscriptions;
+
+    public function __construct()
+    {
+        $this->notificationTopicSubscriptions = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -118,6 +130,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setToken(?string $token): self
     {
         $this->token = $token;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|UserNotificationTopicSubscription[]
+     */
+    public function getNotificationTopicSubscriptions(): Collection
+    {
+        return $this->notificationTopicSubscriptions;
+    }
+
+    public function addNotificationTopicSubscription(UserNotificationTopicSubscription $notificationTopicSubscription): self
+    {
+        if (!$this->notificationTopicSubscriptions->contains($notificationTopicSubscription)) {
+            $this->notificationTopicSubscriptions[] = $notificationTopicSubscription;
+            $notificationTopicSubscription->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNotificationTopicSubscription(UserNotificationTopicSubscription $notificationTopicSubscription): self
+    {
+        if ($this->notificationTopicSubscriptions->removeElement($notificationTopicSubscription)) {
+            // set the owning side to null (unless already changed)
+            if ($notificationTopicSubscription->getUser() === $this) {
+                $notificationTopicSubscription->setUser(null);
+            }
+        }
 
         return $this;
     }
