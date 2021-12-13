@@ -8,6 +8,7 @@ parameters:
     app.component.servicedatasync.vehicleposition: '%env(SERVICEDATA_VEHICLEPOSITION_SYNC)%'
     app.gtfs.static.url: '%env(GTFS_STATIC_URL)%'
     app.gtfs.rt.url: '%env(GTFS_RT_URL)%'
+    app.component.notifications.connector: '%env(NOTIFICATION_SERVICE)%'
 
 services:
     # default configuration for services in *this* file
@@ -39,3 +40,7 @@ services:
             - { name: doctrine.event_subscriber, connection: default }
         calls:
             - [ setAnnotationReader, [ "@annotation_reader" ] ]
+
+    App\EventListener\VehicleStatusStopUpdateSubscriber:
+        tags:
+            -name: 'doctrine.event_subscriber'

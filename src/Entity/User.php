@@ -47,6 +47,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     private $notificationTopicSubscriptions;
 
+    /**
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private $notificationDeviceToken;
+
     public function __construct()
     {
         $this->notificationTopicSubscriptions = new ArrayCollection();
@@ -160,6 +165,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $notificationTopicSubscription->setUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getNotificationDeviceToken(): ?string
+    {
+        return $this->notificationDeviceToken;
+    }
+
+    public function setNotificationDeviceToken(?string $notificationDeviceToken): self
+    {
+        $this->notificationDeviceToken = $notificationDeviceToken;
 
         return $this;
     }

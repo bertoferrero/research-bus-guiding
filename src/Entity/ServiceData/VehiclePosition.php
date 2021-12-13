@@ -56,11 +56,11 @@ class VehiclePosition
     private $schemaStopId;
 
     /**
-     * @ORM\Column(type="VehiclePositionStatusEnum")
+     * @ORM\Column(type="VehiclePositionStatusEnum", nullable=true)
      * DoctrineAssert\Enum(entity="App\Lib\Enum\VehiclePositionStatusEnum")   
      * @Gedmo\Versioned
      */
-    private $currentStatus = 0;
+    private $currentStatus;
 
     public function getId(): ?int
     {
@@ -132,7 +132,7 @@ class VehiclePosition
         return $this->currentStatus;
     }
 
-    public function setCurrentStatus(string $currentStatus): self
+    public function setCurrentStatus(?string $currentStatus): self
     {
         $this->currentStatus = $currentStatus;
 

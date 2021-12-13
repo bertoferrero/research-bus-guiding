@@ -52,6 +52,20 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         return $token;
     }
 
+    public function findNotificationTokensByTopics(array $topics)
+    {
+        $query = $this->createQueryBuilder('u');
+        $query->select('DISTINCT(u.notificationTopicSubscriptions)');
+        $query->innerJoin('u.notificationTopicSubscriptions', 't');
+        $query->andWhere('t.topic IN (:topics)')->setParameter('topics', $topics);
+        $query->andWhere('u.notificationTopicSubscriptions IS NOT NULL');
+        $query->andWhere('u.notificationTopicSubscriptions != ""');
+
+        $result = $query->getQuery()->getArrayResult();
+        $result = array_column($result, 'notificationTopicSubscriptions');
+        return $result;
+    }
+
     // /**
     //  * @return User[] Returns an array of User objects
     //  */
