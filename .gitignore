@@ -9,3 +9,4 @@
 /vendor/
 ###< symfony/framework-bundle ###
 migrations/*.php
+src/Lib/Components/Notifications/Connectors/fcmauth.json

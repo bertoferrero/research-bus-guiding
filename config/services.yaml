@@ -9,6 +9,7 @@ parameters:
     app.gtfs.static.url: '%env(GTFS_STATIC_URL)%'
     app.gtfs.rt.url: '%env(GTFS_RT_URL)%'
     app.component.notifications.connector: '%env(NOTIFICATION_SERVICE)%'
+    app.FCM.project: '%env(FCM_PROJECT)%'
 
 services:
     # default configuration for services in *this* file

@@ -55,14 +55,14 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     public function findNotificationTokensByTopics(array $topics)
     {
         $query = $this->createQueryBuilder('u');
-        $query->select('DISTINCT(u.notificationTopicSubscriptions)');
+        $query->select('DISTINCT(u.notificationDeviceToken) as notificationDeviceToken');
         $query->innerJoin('u.notificationTopicSubscriptions', 't');
         $query->andWhere('t.topic IN (:topics)')->setParameter('topics', $topics);
-        $query->andWhere('u.notificationTopicSubscriptions IS NOT NULL');
-        $query->andWhere('u.notificationTopicSubscriptions != ""');
+        $query->andWhere('u.notificationDeviceToken IS NOT NULL');
+        $query->andWhere('u.notificationDeviceToken != \'\'');
 
         $result = $query->getQuery()->getArrayResult();
-        $result = array_column($result, 'notificationTopicSubscriptions');
+        $result = array_column($result, 'notificationDeviceToken');
         return $result;
     }
 

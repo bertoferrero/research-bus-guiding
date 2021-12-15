@@ -1,4 +1,5 @@
 <?php
+namespace App\Lib\Components\Notifications;
 
 use App\Entity\ServiceData\Trip;
 use App\Entity\ServiceData\VehiclePosition;
@@ -31,8 +32,8 @@ class TopicResolver
         //Line
         $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $vehiclePosition->getschemaTripId()]);
         if ($trip != null) {
-            $topics[] = $this->composeTopic(['line', $trip->getRoute()->getSchemaRouteId(), $vehiclePosition->getCurrentStatus(), $vehiclePosition->getschemaStopId()]);
-            $topics[] = $this->composeTopic(['line', $trip->getRoute()->getSchemaRouteId(), $vehiclePosition->getCurrentStatus(), 0]);
+            $topics[] = $this->composeTopic(['line', $trip->getRoute()->getSchemaId(), $vehiclePosition->getCurrentStatus(), $vehiclePosition->getschemaStopId()]);
+            $topics[] = $this->composeTopic(['line', $trip->getRoute()->getSchemaId(), $vehiclePosition->getCurrentStatus(), 0]);
         } else {
             $this->logger->error("TopicResolver - No se localiza Trip para el id indicado: " . $vehiclePosition->getschemaTripId(), [$vehiclePosition]);
         }

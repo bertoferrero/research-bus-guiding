@@ -7,7 +7,7 @@ use App\Lib\Components\Notifications\NotificationManager;
 use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
 use Doctrine\ORM\Events;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
-use Doctrine\Persistence\Event\PreUpdateEventArgs;
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 
 class VehicleStatusStopUpdateSubscriber implements EventSubscriberInterface
 {

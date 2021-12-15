@@ -1,5 +1,5 @@
 <?php
-namespace App\Lib\Components\Notifications;
+namespace App\Lib\Components\Notifications\Connectors;
 
 use App\Lib\Components\Notifications\Connectors\FCMConnector;
 use App\Lib\Components\Notifications\Connectors\NotificationConnectorInterface;
@@ -14,7 +14,7 @@ class NotificationConnectorFactory{
     public function getNotificationConnector(): ?NotificationConnectorInterface{
         $connector = $this->params->get('app.component.notifications.connector');
         return match($connector){
-            'FCM' => new FCMConnector(),
+            'FCM' => new FCMConnector($this->params->get('app.FCM.project')),
             default => null  
         };
     }
