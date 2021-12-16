@@ -2,14 +2,17 @@
 
 namespace App\Lib\Components\Notifications\Connectors;
 
+use App\Message\NotificationConnectorMessage;
+use Symfony\Component\Messenger\MessageBusInterface;
+
 class FCMConnector implements NotificationConnectorInterface
 {
-    public function __construct(protected string $project)
+    public function __construct(protected string $project, protected MessageBusInterface $bus)
     {
     }
 
 
-    public function sendMessage(array $devices, array $message)
+    public function sendMessageAsync(array $devices, array $message)
     {
         //TODO include messaging
         //Why topics cannot be use into this project https://firebase.google.com/docs/cloud-messaging/android/topic-messaging
@@ -22,10 +25,11 @@ class FCMConnector implements NotificationConnectorInterface
             $this->sendMessageAsync($devicesSet, $message);
         }*/
         foreach ($devices as $device) {
-            $this->sendMessageAsync([$device], $message);
+            $this->bus->dispatch(new NotificationConnectorMessage([$device], $message));
+            //$this->sendMessage([$device], $message);
         }
     }
-    public function sendMessageAsync(array $devices, array $message)
+    public function sendMessage(array $devices, array $message)
     {
         $message = array_map('strval', $message);
         //https://firebase.google.com/docs/cloud-messaging/server#xmpp-request

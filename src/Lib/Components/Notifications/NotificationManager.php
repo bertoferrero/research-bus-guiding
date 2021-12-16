@@ -30,7 +30,7 @@ class NotificationManager
         $message = $this->notificationMessageFactory->composeVehiclePositionMessage($entity);
         $notificationConnector = $this->connectorFactory->getNotificationConnector();
         if(!empty($tokens)){
-            $notificationConnector->sendMessage($tokens, $message->toArray());
+            $notificationConnector->sendMessageAsync($tokens, $message->toArray());
         }
     }
 }

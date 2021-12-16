@@ -1,12 +1,13 @@
 <?php
 namespace App\Lib\Components\Notifications\Connectors;
 
+use Symfony\Component\Messenger\MessageBusInterface;
 use App\Lib\Components\Notifications\Connectors\FCMConnector;
-use App\Lib\Components\Notifications\Connectors\NotificationConnectorInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use App\Lib\Components\Notifications\Connectors\NotificationConnectorInterface;
 
 class NotificationConnectorFactory{
-    public function __construct(protected ParameterBagInterface $params)
+    public function __construct(protected ParameterBagInterface $params, protected MessageBusInterface $bus)
     {
         
     }
@@ -14,7 +15,7 @@ class NotificationConnectorFactory{
     public function getNotificationConnector(): ?NotificationConnectorInterface{
         $connector = $this->params->get('app.component.notifications.connector');
         return match($connector){
-            'FCM' => new FCMConnector($this->params->get('app.FCM.project')),
+            'FCM' => new FCMConnector($this->params->get('app.FCM.project'), $this->bus),
             default => null  
         };
     }
