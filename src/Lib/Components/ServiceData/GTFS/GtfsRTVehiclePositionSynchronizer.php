@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Lib\Components\ServiceData\GTFS;
 
 
@@ -23,6 +24,7 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
         //Recorremos cada elemento
         $entities = $feedMessage->getEntity();
         $vehiclePositionRepo = $this->em->getRepository(VehiclePosition::class);
+        $userRepo = $this->em->getRepository(User::class);
         $workingVehicles = [];
         foreach ($entities as $entity) {
             //Recogemos el vehicle y procesamos la entidad
@@ -38,6 +40,10 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
             $vehicleEntity->setschemaTripId($vehicle->getTrip()->getTripId());
             $vehicleEntity->setschemaStopId($vehicle->getStopId());
             $vehicleEntity->setCurrentStatus($this->transformCurrentStatus($vehicle->getCurrentStatus()));
+            
+            $driver = $userRepo->findOneBy(['driverVehicleId' => $vehicleId]);
+            $vehicleEntity->setDriver($driver);
+
             $this->em->persist($vehicleEntity);
             $workingVehicles[] = $vehicleId;
         }

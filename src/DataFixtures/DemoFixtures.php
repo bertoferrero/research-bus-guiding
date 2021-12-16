@@ -21,6 +21,14 @@ class DemoFixtures extends Fixture
         $user = new User();
         $user->setEmail('alberto.ferrero.lopez.eg@tut.jp');
         $user->setPassword($this->encoder->hashPassword($user, '123456789'));
+        $user->setRoles(['ROLE_RIDER']);
+        $manager->persist($user);
+
+        //Driver
+        $user = new User();
+        $user->setEmail('driver@buscompany.com');
+        $user->setPassword($this->encoder->hashPassword($user, '123456789'));
+        $user->setRoles(['ROLE_DRIVER']);
         $manager->persist($user);
 
         $manager->flush();

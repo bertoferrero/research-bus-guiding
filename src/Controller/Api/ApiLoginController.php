@@ -9,10 +9,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-#[Route('/login')]
+#[Route('/')]
 class ApiLoginController extends AbstractController
 {
-    #[Route('/', name: 'api_login', methods: ['POST'])]
+    #[Route('/login', name: 'api_login', methods: ['POST'])]
     public function loginAction(#[CurrentUser] ?User $user, EntityManagerInterface $em): Response
     {
         if (null === $user) {
@@ -30,5 +30,23 @@ class ApiLoginController extends AbstractController
             'user'  => $user->getUserIdentifier(),
             'token' => $token,
         ]);
+    }
+
+    #[Route('/logout', name: 'api_logout', methods: ['POST'])]
+    public function logoutAction(#[CurrentUser] ?User $user, EntityManagerInterface $em): Response
+    {
+        if (null === $user) {
+            return $this->json([
+                'message' => 'missing credentials',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $user->setToken(null);
+        $user->setVehiclePosition(null);
+        $user->setDriverVehicleId(null);
+        $em->persist($user);
+        $em->flush();
+
+        return $this->json('done!');
     }
 }

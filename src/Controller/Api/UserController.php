@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\ServiceData\VehiclePosition;
 use App\Entity\User;
 use App\Entity\UserNotificationTopicSubscription;
 use App\Lib\Components\UsersManagement\TopicSubscriptor;
@@ -39,21 +40,38 @@ class UserController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $data = json_decode($request->getContent(),true);
-        if(!is_array($data)){
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
             throw new NotFoundHttpException('Excpecting mandatory parameters!');
         }
 
-        if(isset($data['notification_token'])){
+        $returnData = [];
+
+        //Notification token updating
+        if (isset($data['notification_token'])) {
             $notificationToken = trim(strip_tags($data['notification_token']));
             $user->setNotificationDeviceToken($notificationToken);
             $em->persist($user);
-            $em->flush();
+            $returnData['notification_token'] = $user->getNotificationDeviceToken();
+        }
+        //Driver data
+        if ($this->isGranted('ROLE_DRIVER')) {
+            //Driver vehicle id
+            if (isset($data['vehicle_id'])) {
+                $vehicleId = trim(strip_tags($data['vehicle_id']));
+                $user->setDriverVehicleId($vehicleId);
+                //Search vehiclePosition matching
+                $vehiclePositionRepo = $em->getRepository(VehiclePosition::class);
+                $vehiclePosition = $vehiclePositionRepo->findOneBy(['schemaVehicleId' => $vehicleId]);
+                $user->setVehiclePosition($vehiclePosition);
+                $em->persist($user);
+            }
         }
 
-        return $this->json([
-            'notification_token'  => $user->getNotificationDeviceToken()
-        ]);
+
+        $em->flush();
+
+        return $this->json($returnData);
     }
 
     #region Topics
@@ -79,8 +97,8 @@ class UserController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $data = json_decode($request->getContent(),true);
-        if(!is_array($data)){
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
             throw new NotFoundHttpException('Excpecting mandatory parameters!');
         }
 
@@ -98,8 +116,8 @@ class UserController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $data = json_decode($request->getContent(),true);
-        if(!is_array($data)){
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
             throw new NotFoundHttpException('Excpecting mandatory parameters!');
         }
 

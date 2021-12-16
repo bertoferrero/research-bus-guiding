@@ -2,6 +2,7 @@
 
 namespace App\Entity\ServiceData;
 
+use App\Entity\User;
 use App\Repository\ServiceData\VehiclePositionRepository;
 use Doctrine\ORM\Mapping as ORM;
 use App\Lib\Enum\VehiclePositionStatusEnum;
@@ -61,6 +62,11 @@ class VehiclePosition
      * @Gedmo\Versioned
      */
     private $currentStatus;
+
+    /**
+     * @ORM\OneToOne(targetEntity=User::class, inversedBy="vehiclePosition", cascade={"persist", "remove"})
+     */
+    private $driver;
 
     public function getId(): ?int
     {
@@ -135,6 +141,18 @@ class VehiclePosition
     public function setCurrentStatus(?string $currentStatus): self
     {
         $this->currentStatus = $currentStatus;
+
+        return $this;
+    }
+
+    public function getDriver(): ?User
+    {
+        return $this->driver;
+    }
+
+    public function setDriver(?User $driver): self
+    {
+        $this->driver = $driver;
 
         return $this;
     }

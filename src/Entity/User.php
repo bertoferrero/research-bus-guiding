@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\ServiceData\VehiclePosition;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -11,6 +12,9 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
+ *  @ORM\Table(indexes={
+ *     @ORM\Index(name="driver_vehicle_id", columns={"driver_vehicle_id"})
+ * })
  */
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -51,6 +55,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\Column(type="text", nullable=true)
      */
     private $notificationDeviceToken;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $driverVehicleId;
+
+    /**
+     * @ORM\OneToOne(targetEntity=VehiclePosition::class, mappedBy="driver", cascade={"persist", "remove"})
+     */
+    private $vehiclePosition;
 
     public function __construct()
     {
@@ -177,6 +191,40 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setNotificationDeviceToken(?string $notificationDeviceToken): self
     {
         $this->notificationDeviceToken = $notificationDeviceToken;
+
+        return $this;
+    }
+
+    public function getDriverVehicleId(): ?string
+    {
+        return $this->driverVehicleId;
+    }
+
+    public function setDriverVehicleId(?string $driverVehicleId): self
+    {
+        $this->driverVehicleId = $driverVehicleId;
+
+        return $this;
+    }
+
+    public function getVehiclePosition(): ?VehiclePosition
+    {
+        return $this->vehiclePosition;
+    }
+
+    public function setVehiclePosition(?VehiclePosition $vehiclePosition): self
+    {
+        // unset the owning side of the relation if necessary
+        if ($vehiclePosition === null && $this->vehiclePosition !== null) {
+            $this->vehiclePosition->setDriver(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($vehiclePosition !== null && $vehiclePosition->getDriver() !== $this) {
+            $vehiclePosition->setDriver($this);
+        }
+
+        $this->vehiclePosition = $vehiclePosition;
 
         return $this;
     }
