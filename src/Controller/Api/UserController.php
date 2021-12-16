@@ -17,7 +17,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class UserController extends AbstractController
 {
     #[Route('/', name: 'api_user', methods: ['GET'])]
-    public function loginAction(#[CurrentUser] ?User $user): Response
+    public function userGetAction(#[CurrentUser] ?User $user): Response
     {
         if (null === $user) {
             return $this->json([
@@ -27,6 +27,32 @@ class UserController extends AbstractController
 
         return $this->json([
             'user'  => $user->getUserIdentifier()
+        ]);
+    }
+
+    #[Route('/', name: 'api_user_put', methods: ['PUT'])]
+    public function userPutAction(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $em): Response
+    {
+        if (null === $user) {
+            return $this->json([
+                'message' => 'missing credentials',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $data = json_decode($request->getContent(),true);
+        if(!is_array($data)){
+            throw new NotFoundHttpException('Excpecting mandatory parameters!');
+        }
+
+        if(isset($data['notification_token'])){
+            $notificationToken = trim(strip_tags($data['notification_token']));
+            $user->setNotificationDeviceToken($notificationToken);
+            $em->persist($user);
+            $em->flush();
+        }
+
+        return $this->json([
+            'notification_token'  => $user->getNotificationDeviceToken()
         ]);
     }
 
