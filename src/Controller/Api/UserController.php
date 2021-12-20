@@ -17,7 +17,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 #[Route('/user')]
 class UserController extends AbstractController
 {
-    #[Route('/', name: 'api_user', methods: ['GET'])]
+    #[Route('', name: 'api_user', methods: ['GET'])]
     public function userGetAction(#[CurrentUser] ?User $user): Response
     {
         if (null === $user) {
@@ -31,7 +31,7 @@ class UserController extends AbstractController
         ]);
     }
 
-    #[Route('/', name: 'api_user_put', methods: ['PUT'])]
+    #[Route('', name: 'api_user_put', methods: ['PUT'])]
     public function userPutAction(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $em): Response
     {
         if (null === $user) {
