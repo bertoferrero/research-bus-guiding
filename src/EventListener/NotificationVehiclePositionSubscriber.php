@@ -9,7 +9,7 @@ use Doctrine\ORM\Events;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 
-class VehicleStatusStopUpdateSubscriber implements EventSubscriberInterface
+class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
 {
 
     public function __construct(protected NotificationManager $notificationManager)

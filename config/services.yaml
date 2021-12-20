@@ -42,6 +42,10 @@ services:
         calls:
             - [ setAnnotationReader, [ "@annotation_reader" ] ]
 
-    App\EventListener\VehicleStatusStopUpdateSubscriber:
+    App\EventListener\NotificationVehiclePositionSubscriber:
+        tags:
+            -name: 'doctrine.event_subscriber'
+
+    App\EventListener\StopRequestVehiclePositionSubscriber:
         tags:
             -name: 'doctrine.event_subscriber'
