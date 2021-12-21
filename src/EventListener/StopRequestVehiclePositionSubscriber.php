@@ -1,27 +1,31 @@
 <?php
+
 namespace App\EventListener;
 
 
+use Doctrine\ORM\Events;
+use Doctrine\ORM\Event\PostFlushEventArgs;
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 use App\Entity\ServiceData\VehiclePosition;
+use Doctrine\Persistence\Event\LifecycleEventArgs;
 use App\Lib\Components\StopRequestManagement\VehicleStopNotificator;
 use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
-use Doctrine\ORM\Events;
-use Doctrine\Persistence\Event\LifecycleEventArgs;
-use Doctrine\ORM\Event\PreUpdateEventArgs;
 
 class StopRequestVehiclePositionSubscriber implements EventSubscriberInterface
 {
 
+    private static array $entitiesToNotify = [];
+
     public function __construct(protected VehicleStopNotificator $vehicleStopNotificator)
     {
-        
     }
 
-    public function getSubscribedEvents()
+    public function getSubscribedEvents(): array
     {
         return [
             Events::preUpdate,
-            Events::postPersist
+            Events::postPersist,
+            Events::postFlush,
         ];
     }
 
@@ -36,7 +40,9 @@ class StopRequestVehiclePositionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->vehicleStopNotificator->sendVehicleStopNotification($entity);
+        if (!isset(static::$entitiesToNotify[$entity->getId()])) {
+            static::$entitiesToNotify[$entity->getId()] = $entity;
+        }
     }
 
     public function postPersist(LifecycleEventArgs $args): void
@@ -45,7 +51,22 @@ class StopRequestVehiclePositionSubscriber implements EventSubscriberInterface
         if (!$entity instanceof VehiclePosition) {
             return;
         }
+
         //Persist is the creation process, there is no changes on fields because all fields are just created
-        $this->vehicleStopNotificator->sendVehicleStopNotification($entity);
+        if (!isset(static::$entitiesToNotify[$entity->getId()])) {
+            static::$entitiesToNotify[$entity->getId()] = $entity;
+        }
+    }
+
+    public function postFlush(PostFlushEventArgs $args)
+    {
+        //Block loop callbacks
+        if (count(static::$entitiesToNotify) > 0) {
+            $entitiesToNotify = static::$entitiesToNotify;
+            static::$entitiesToNotify = [];
+            foreach ($entitiesToNotify as $entity) {
+                $this->vehicleStopNotificator->sendVehicleStopNotification($entity);
+            }
+        }
     }
 }

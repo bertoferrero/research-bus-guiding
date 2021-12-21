@@ -2,11 +2,13 @@
 
 namespace App\Lib\Components\StopRequestManagement;
 
-use App\Entity\ServiceData\VehiclePosition;
-use App\Lib\Components\Notifications\NotificationManager;
+use App\Entity\StopRequest;
+use App\Entity\ServiceData\Trip;
 use App\Lib\Enum\StopRequestStatusEnum;
-use App\Lib\Enum\VehiclePositionStatusEnum;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\ServiceData\VehiclePosition;
+use App\Lib\Enum\VehiclePositionStatusEnum;
+use App\Lib\Components\Notifications\NotificationManager;
 
 class VehicleStopNotificator
 {

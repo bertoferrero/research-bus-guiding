@@ -2,26 +2,30 @@
 namespace App\EventListener;
 
 
+use Doctrine\ORM\Events;
+use Doctrine\ORM\Event\PostFlushEventArgs;
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 use App\Entity\ServiceData\VehiclePosition;
+use Doctrine\Persistence\Event\LifecycleEventArgs;
 use App\Lib\Components\Notifications\NotificationManager;
 use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
-use Doctrine\ORM\Events;
-use Doctrine\Persistence\Event\LifecycleEventArgs;
-use Doctrine\ORM\Event\PreUpdateEventArgs;
 
 class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
 {
+
+    private static array $entitiesToNotify = [];
 
     public function __construct(protected NotificationManager $notificationManager)
     {
         
     }
 
-    public function getSubscribedEvents()
+    public function getSubscribedEvents(): array
     {
         return [
             Events::preUpdate,
-            Events::postPersist
+            Events::postPersist,
+            Events::postFlush,
         ];
     }
 
@@ -36,7 +40,9 @@ class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->notificationManager->sendVehiclePositionNotification($entity);
+        if (!isset(static::$entitiesToNotify[$entity->getId()])) {
+            static::$entitiesToNotify[$entity->getId()] = $entity;
+        }
     }
 
     public function postPersist(LifecycleEventArgs $args): void
@@ -46,6 +52,20 @@ class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
             return;
         }
         //Persist is the creation process, there is no changes on fields because all fields are just created
-        $this->notificationManager->sendVehiclePositionNotification($entity);
+        if (!isset(static::$entitiesToNotify[$entity->getId()])) {
+            static::$entitiesToNotify[$entity->getId()] = $entity;
+        }
+    }
+
+    public function postFlush(PostFlushEventArgs $args)
+    {
+        //Block loop callbacks
+        if (count(static::$entitiesToNotify) > 0) {
+            $entitiesToNotify = static::$entitiesToNotify;
+            static::$entitiesToNotify = [];
+            foreach ($entitiesToNotify as $entity) {
+                $this->notificationManager->sendVehiclePositionNotification($entity);
+            }
+        }
     }
 }
