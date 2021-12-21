@@ -2,21 +2,10 @@
 
 namespace App\Controller\Cron;
 
-use DateTime;
-use App\Entity\Gtfs\Stop;
-use App\Entity\Gtfs\Trip;
-use App\Entity\Gtfs\StopTime;
-use Trafiklab\Gtfs\Model\GtfsArchive;
-use App\Entity\Gtfs\Route as GtfsRoute;
-use App\Entity\GtfsRT\VehiclePosition;
 use App\Lib\Components\ServiceData\ServiceDataSynchronizerFactory;
-use App\Lib\Enum\VehiclePositionStatusEnum;
-use Doctrine\ORM\EntityManagerInterface;
-use Google\Transit\Realtime\FeedMessage;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class ServiceDataSyncController extends AbstractController
 {

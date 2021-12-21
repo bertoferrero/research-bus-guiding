@@ -28,4 +28,18 @@ class NotificationMessageFactory
 
         return $message;
     }
+
+    public function composeStopRequestMessage(VehiclePosition $vehiclePosition): StopRequestMessage
+    {
+        $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $vehiclePosition->getschemaTripId()]);
+        $message = new StopRequestMessage();
+        $message->setVehicleId($vehiclePosition->getschemaVehicleId());
+        $message->setStatus($vehiclePosition->getCurrentStatus());
+        $message->setStopId($vehiclePosition->getschemaStopId());
+        if($trip!=null){
+            $message->setLineId($trip->getRoute()->getSchemaId());
+        }
+
+        return $message;
+    }
 }

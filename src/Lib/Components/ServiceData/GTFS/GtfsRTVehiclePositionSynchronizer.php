@@ -3,6 +3,7 @@
 namespace App\Lib\Components\ServiceData\GTFS;
 
 
+use App\Entity\User;
 use Google\Transit\Realtime\FeedMessage;
 use App\Entity\ServiceData\VehiclePosition;
 use App\Lib\Enum\VehiclePositionStatusEnum;

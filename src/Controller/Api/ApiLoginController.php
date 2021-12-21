@@ -29,7 +29,8 @@ class ApiLoginController extends AbstractController
         return $this->json([
             'user'  => $user->getUserIdentifier(),
             'token' => $token,
-        ]);
+            'role' => $this->isGranted('ROLE_DRIVER') ? 'driver' : 'rider'
+        ]); 
     }
 
     #[Route('/logout', name: 'api_logout', methods: ['POST'])]
