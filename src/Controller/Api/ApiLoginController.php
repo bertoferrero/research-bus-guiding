@@ -29,7 +29,7 @@ class ApiLoginController extends AbstractController
         return $this->json([
             'user'  => $user->getUserIdentifier(),
             'token' => $token,
-            'role' => $this->isGranted('ROLE_DRIVER') ? 'driver' : 'rider'
+            'role' => ($this->isGranted('ROLE_DEV') ? 'dev' : ($this->isGranted('ROLE_DRIVER') ? 'driver' : 'rider'))
         ]); 
     }
 

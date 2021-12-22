@@ -19,7 +19,7 @@ class DemoFixtures extends Fixture
     {
         //User
         $user = new User();
-        $user->setEmail('alberto.ferrero.lopez.eg@tut.jp');
+        $user->setEmail('user@buscompany.com');
         $user->setPassword($this->encoder->hashPassword($user, '123456789'));
         $user->setRoles(['ROLE_RIDER']);
         $manager->persist($user);
@@ -29,6 +29,13 @@ class DemoFixtures extends Fixture
         $user->setEmail('driver@buscompany.com');
         $user->setPassword($this->encoder->hashPassword($user, '123456789'));
         $user->setRoles(['ROLE_DRIVER']);
+        $manager->persist($user);
+
+        //DEV
+        $user = new User();
+        $user->setEmail('alberto.ferrero.lopez.eg@tut.jp');
+        $user->setPassword($this->encoder->hashPassword($user, '123456789'));
+        $user->setRoles(['ROLE_DEV']);
         $manager->persist($user);
 
         $manager->flush();
