@@ -16,7 +16,6 @@ use Gedmo\Mapping\Annotation as Gedmo;
  *     @ORM\Index(name="line_id_idx", columns={"schema_line_id"}),
  * })
  * @ORM\HasLifecycleCallbacks()
- * @Gedmo\Loggable
  */
 class StopRequest
 {
@@ -29,26 +28,22 @@ class StopRequest
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Gedmo\Versioned
      */
     private $schemaVehicleId;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Gedmo\Versioned
      */
     private $schemaLineId;
 
     /**
      * @ORM\Column(type="integer")
-     * @Gedmo\Versioned
      */
     private $schemaStopId;
 
     /**
      * @ORM\Column(type="StopRequestStatusEnum", nullable=true)
      * DoctrineAssert\Enum(entity="App\Lib\Enum\StopRequestStatusEnum")   
-     * @Gedmo\Versioned
      */
     private $status;
 
