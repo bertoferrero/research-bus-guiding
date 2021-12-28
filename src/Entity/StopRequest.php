@@ -49,7 +49,6 @@ class StopRequest
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @Gedmo\Versioned
      * @ORM\JoinColumn(onDelete="SET NULL")
      */
     private $user;

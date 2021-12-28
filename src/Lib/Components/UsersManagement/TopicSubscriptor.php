@@ -74,9 +74,18 @@ class TopicSubscriptor
         foreach($topics as $topic){
             $topic = trim(strip_tags($topic));
             if(!empty($topic)){
-                $userTopic = $userTopicRepo->findOneBy(['user' => $user, 'topic' => $topic]);
-                if($userTopic != null){
-                    $this->em->remove($userTopic);
+                if($topic == "*"){ //If topic is *, it means wildcard, all topics, clear
+                    $userTopics = $userTopicRepo->findBy(['user' => $user]);
+                    foreach($userTopics as $userTopic){
+                        $this->em->remove($userTopic);
+                    }
+                    break;
+                }
+                else{
+                    $userTopic = $userTopicRepo->findOneBy(['user' => $user, 'topic' => $topic]);
+                    if($userTopic != null){
+                        $this->em->remove($userTopic);
+                    }
                 }
             }
         }
