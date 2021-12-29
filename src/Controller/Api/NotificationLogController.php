@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\NotificationLog;
 use App\Entity\User;
 use InvalidArgumentException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,17 +18,28 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use App\Lib\Components\StopRequestManagement\UserStopRequestsManager;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
-#[Route('/samplelog')]
-class SampleLogController extends AbstractController
+#[Route('/notificationlog')]
+class NotificationLogController extends AbstractController
 {
 
-    #[Route('', name: 'samplelog_putpost', methods: ['PUT', 'POST'])]
-    public function putPostAction(#[CurrentUser] ?User $user, Request $request, UserStopRequestsManager $userStopRequestsManager): Response
+    #[Route('/{notificationlogId}', name: 'notificationlog_putpost', methods: ['PUT', 'POST'])]
+    public function putPostAction(#[CurrentUser] ?User $user, int $notificationlogId, Request $request, EntityManagerInterface $em): Response
     {
         try {
             if (null === $user) {
                 return $this->json([
                     'message' => 'missing credentials',
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
+            //Load the notification log and check it
+            $notificationLog = $em->find(NotificationLog::class, $notificationlogId);
+            if(empty($notificationLog)){
+                return $this->json(['message' => 'not found'], Response::HTTP_NOT_FOUND);
+            }
+            if($notificationLog->getDeviceToken() != $user->getNotificationDeviceToken()){
+                return $this->json([
+                    'message' => 'unauthorized',
                 ], Response::HTTP_UNAUTHORIZED);
             }
 
@@ -37,14 +49,16 @@ class SampleLogController extends AbstractController
             }
 
             //Check the data
-            if (!isset($data['sample_type']) || !isset($data['sample_date'])) {
+            if (!isset($data['delivery_date'])) {
                 throw new NotFoundHttpException('Excpecting mandatory parameters!');
             }
 
-            $sample_type = $data['sample_type'];
-            $sample_date = $data['sample_date'];
-            $sample_date_send = $data['sample_date_send'] ?? null;
+            $delivery_date = $data['delivery_date'];
+            $deliveryDateTime = \DateTime::createFromFormat("Y-m-d H:i:s", $delivery_date, new \DateTimeZone("UTC"));
 
+            $notificationLog->setDateDelivered($deliveryDateTime);
+            $em->persist($notificationLog);
+            $em->flush();
 
             //return the same get action result
             return $this->json(["result" => "done"]);

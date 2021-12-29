@@ -17,7 +17,7 @@ class NotificationConnectorHandler implements MessageHandlerInterface{
         //Load the connector
         $connector = $this->notificationConnectorFactory->getNotificationConnector();
         //Launch the message
-        $connector->sendMessage($message->getDevices(), $message->getMessage());
+        $connector->sendMessage($message->getDevice(), $message->getMessage());
     }
 
 }

@@ -3,7 +3,7 @@ namespace App\Message;
 
 class NotificationConnectorMessage{
 
-    public function __construct(private array $devices, private array $message)
+    public function __construct(private string $device, private array $message)
     {
         
     }
@@ -11,9 +11,9 @@ class NotificationConnectorMessage{
     /**
      * Get the value of devices
      */ 
-    public function getDevices(): array
+    public function getDevice(): string
     {
-        return $this->devices;
+        return $this->device;
     }
 
     /**
@@ -21,9 +21,9 @@ class NotificationConnectorMessage{
      *
      * @return  self
      */ 
-    public function setDevices(array $devices)
+    public function setDevice(string $device)
     {
-        $this->devices = $devices;
+        $this->device = $device;
 
         return $this;
     }

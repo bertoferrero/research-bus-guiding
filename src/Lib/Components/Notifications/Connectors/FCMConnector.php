@@ -5,31 +5,9 @@ namespace App\Lib\Components\Notifications\Connectors;
 use App\Message\NotificationConnectorMessage;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-class FCMConnector implements NotificationConnectorInterface
+class FCMConnector extends AbstractNotificationConnector
 {
-    public function __construct(protected string $project, protected MessageBusInterface $bus)
-    {
-    }
-
-
-    public function sendMessageAsync(array $devices, array $message)
-    {
-        //TODO include messaging
-        //Why topics cannot be use into this project https://firebase.google.com/docs/cloud-messaging/android/topic-messaging
-        //Curl implementation does not allow multitoken sending... ¬¬
-
-        //Devices are splited into subarrayes of 400 devices
-        //
-        /*$subDevices = array_chunk($devices, 400);
-        foreach ($subDevices as $devicesSet) {
-            $this->sendMessageAsync($devicesSet, $message);
-        }*/
-        foreach ($devices as $device) {
-            $this->bus->dispatch(new NotificationConnectorMessage([$device], $message));
-            //$this->sendMessage([$device], $message);
-        }
-    }
-    public function sendMessage(array $devices, array $message)
+    public function executeMessageSending(string $device, array $message)
     {
         $message = array_map('strval', $message);
         //https://firebase.google.com/docs/cloud-messaging/server#xmpp-request
@@ -51,10 +29,9 @@ class FCMConnector implements NotificationConnectorInterface
         ];*/
 
         //https://firebase.google.com/docs/cloud-messaging/migrate-v1
-
         $body = [
             "message" => [
-                "token" => $devices[0],
+                "token" => $device,
                 "data" => $message,
                 "android" => [
                     "direct_boot_ok" => true,
