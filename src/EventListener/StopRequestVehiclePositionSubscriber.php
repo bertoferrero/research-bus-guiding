@@ -36,7 +36,7 @@ class StopRequestVehiclePositionSubscriber implements EventSubscriberInterface
             return;
         }
         //Filter 2, only when changed status or stopid values
-        if (!($args->hasChangedField('currentStatus') || $args->hasChangedField('schemaStopId'))) {
+        if (!(/*$args->hasChangedField('currentStatus') || */$args->hasChangedField('schemaStopId'))) {
             return;
         }
 

@@ -47,6 +47,7 @@ class VehiclePosition
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Gedmo\Versioned
      */
     private $schemaTripId;
 

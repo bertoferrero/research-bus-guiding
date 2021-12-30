@@ -24,9 +24,9 @@ class VehicleStopNotificator
         }
 
         $status = $entity->getCurrentStatus();
-        if ($status != VehiclePositionStatusEnum::IN_TRANSIT_TO) {
+        /*if ($status != VehiclePositionStatusEnum::IN_TRANSIT_TO) {
             return;
-        }
+        }*/
         $this->userStopRequestsManager->invalidateOldRequests();
 
         $stopId = $entity->getschemaStopId();
