@@ -1,7 +1,7 @@
 <?php
 
 $cron_url = 'http://127.0.0.1:8001/cron/servicedatasync/vehicleposition';
-$waitTime = 5;
+$waitTime = 3;
 
 while (true) {
     $startTime = time();

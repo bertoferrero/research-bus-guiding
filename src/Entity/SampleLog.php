@@ -29,11 +29,6 @@ class SampleLog
     private $sampleDateTime;
 
     /**
-     * @ORM\Column(type="datetime", nullable=true, options={"comment":"Only if it is required, e.g. When the notification was send"})
-     */
-    private $sampleDateSend;
-
-    /**
      * @ORM\Column(type="datetime", options={"comment":"Just for knowing if the mobile phone's clock is synchronized. It contains the moment when the row has been inserted"})
      */
     private $sampleServerDateTime;
@@ -63,18 +58,6 @@ class SampleLog
     public function setSampleDateTime(\DateTimeInterface $sampleDateTime): self
     {
         $this->sampleDateTime = $sampleDateTime;
-
-        return $this;
-    }
-
-    public function getSampleDateSend(): ?\DateTimeInterface
-    {
-        return $this->sampleDateSend;
-    }
-
-    public function setSampleDateSend(?\DateTimeInterface $sampleDateSend): self
-    {
-        $this->sampleDateSend = $sampleDateSend;
 
         return $this;
     }

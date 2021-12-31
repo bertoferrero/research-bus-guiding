@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\SampleLog;
 use App\Entity\User;
 use InvalidArgumentException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,7 +23,7 @@ class SampleLogController extends AbstractController
 {
 
     #[Route('', name: 'samplelog_putpost', methods: ['PUT', 'POST'])]
-    public function putPostAction(#[CurrentUser] ?User $user, Request $request, UserStopRequestsManager $userStopRequestsManager): Response
+    public function putPostAction(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $em): Response
     {
         try {
             if (null === $user) {
@@ -43,7 +44,14 @@ class SampleLogController extends AbstractController
 
             $sample_type = $data['sample_type'];
             $sample_date = $data['sample_date'];
-            $sample_date_send = $data['sample_date_send'] ?? null;
+
+            $sampleDateTime = \DateTime::createFromFormat("Y-m-d H:i:s", $sample_date, new \DateTimeZone("UTC"));
+
+            $sampleLog = new SampleLog();
+            $sampleLog->setType($sample_type);
+            $sampleLog->setSampleDateTime($sampleDateTime);
+            $em->persist($sampleLog);
+            $em->flush();
 
 
             //return the same get action result

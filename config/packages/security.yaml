@@ -50,5 +50,6 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/api/samplelog, roles: ROLE_DEV }
+        - { path: ^/api/notificationlog, roles: ROLE_DEV }
         - { path: ^/api, roles: ROLE_USER }
         # - { path: ^/profile, roles: ROLE_USER }
