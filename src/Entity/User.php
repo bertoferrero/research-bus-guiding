@@ -42,7 +42,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $password;
 
     /**
-     * @ORM\Column(type="string", length=256, nullable=true, unique=true)
+     * @ORM\Column(type="string", length=128, nullable=true, unique=true)
      */
     private $token;
 
