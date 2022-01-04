@@ -46,7 +46,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     {
         $existingUser = null;
         do {
-            $token = bin2hex(random_bytes($length));
+            $token = bin2hex(random_bytes($length/2));
             $existingUser = $this->findOneBy(['token' => $token]);
         } while ($existingUser != null);
         return $token;
