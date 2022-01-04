@@ -27,7 +27,7 @@ class UserNotificationTopicSubscription
     private $user;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=200)
      */
     private $topic;
 

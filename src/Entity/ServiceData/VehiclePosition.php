@@ -30,7 +30,7 @@ class VehiclePosition
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=128)
      * @Gedmo\Versioned
      */
     private $schemaVehicleId;
@@ -46,7 +46,7 @@ class VehiclePosition
     private $longitude;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=128)
      * @Gedmo\Versioned
      */
     private $schemaTripId;
