@@ -22,7 +22,7 @@ class StopTime
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=128)
      */
     private $schemaTripId;
 
@@ -43,7 +43,7 @@ class StopTime
     private $departureTime;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=128)
      */
     private $schemaStopId;
 

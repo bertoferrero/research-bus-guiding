@@ -27,12 +27,12 @@ class StopRequest
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", length=128, nullable=true)
      */
     private $schemaVehicleId;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", length=128, nullable=true)
      */
     private $schemaLineId;
 
