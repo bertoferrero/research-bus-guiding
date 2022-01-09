@@ -2,7 +2,9 @@
 
 namespace App\Repository\ServiceData;
 
+use App\Entity\ServiceData\Route;
 use App\Entity\ServiceData\Stop;
+use App\Entity\ServiceData\StopTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,6 +19,16 @@ class StopRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Stop::class);
+    }
+
+    public function findByRoute(Route $route){
+        //TODO THAT only could work if there is one trip and one stoptime between route and stops... if this changes, for example, with a different timeshift on weekend, this will fail
+        $query = $this->createQueryBuilder('s');
+        $query->innerJoin('s.stopTimes','st');
+        $query->innerJoin('st.trip','t');
+        $query->andWhere('t.route = :route')->setParameter('route', $route);
+        $query->orderBy('st.stopSequence','ASC');
+        return $query->getQuery()->getResult();
     }
 
     // /**
