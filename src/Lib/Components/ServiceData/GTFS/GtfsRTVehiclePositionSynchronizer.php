@@ -50,9 +50,10 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
         }
         $this->em->flush();
 
+        //Se desactiva porque no siempre vienen todos los vehículos en las actualizaciones
         //Borramos los vehiculos que ya no están en funcionamiento, por limpieza
-        $query = $this->em->createQueryBuilder();
-        $query->delete(VehiclePosition::class, 'v')->andWhere('v.schemaVehicleId NOT IN (:vehicles)')->setParameter('vehicles', $workingVehicles)->getQuery()->execute();
+        //$query = $this->em->createQueryBuilder();
+        //$query->delete(VehiclePosition::class, 'v')->andWhere('v.schemaVehicleId NOT IN (:vehicles)')->setParameter('vehicles', $workingVehicles)->getQuery()->execute();
     }
 
     protected function transformCurrentStatus(int $currentStatus): string
