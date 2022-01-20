@@ -21,8 +21,14 @@ class StopRepository extends ServiceEntityRepository
         parent::__construct($registry, Stop::class);
     }
 
+    public function findBySchemaId(string $schemaId){
+        $query = $this->createQueryBuilder('entity');
+        $query->andWhere('entity.schemaId = :schemaid')->setParameter('schemaid', $schemaId);
+        return $query->getQuery()->getOneOrNullResult();
+    }
+
     public function findByRoute(Route $route){
-        //TODO THAT only could work if there is one trip and one stoptime between route and stops... if this changes, for example, with a different timeshift on weekend, this will fail
+        //TODO This only could work if there is one trip and one stoptime between route and stops... if this changes, for example, with a different timeshift on weekend, this will fail
         $query = $this->createQueryBuilder('s');
         $query->innerJoin('s.stopTimes','st');
         $query->innerJoin('st.trip','t');

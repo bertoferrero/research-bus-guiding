@@ -52,7 +52,7 @@ class VehiclePosition
     private $schemaTripId;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="string", length=128)
      * @Gedmo\Versioned
      */
     private $schemaStopId;
@@ -122,12 +122,12 @@ class VehiclePosition
         return $this;
     }
 
-    public function getschemaStopId(): ?int
+    public function getschemaStopId(): ?string
     {
         return $this->schemaStopId;
     }
 
-    public function setschemaStopId(int $schemaStopId): self
+    public function setschemaStopId(string $schemaStopId): self
     {
         $this->schemaStopId = $schemaStopId;
 

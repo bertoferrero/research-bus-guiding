@@ -1,8 +1,12 @@
 <?php
+
 namespace App\Lib\Components\ServiceData\GTFS;
 
 
 use DateTime;
+use Exception;
+use ZipArchive;
+use Psr\Log\LoggerInterface;
 use App\Entity\ServiceData\Stop;
 use App\Entity\ServiceData\Trip;
 use App\Entity\ServiceData\StopTime;
@@ -10,11 +14,13 @@ use Trafiklab\Gtfs\Model\GtfsArchive;
 use App\Entity\ServiceData\Route as GtfsRoute;
 use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
 
-class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer{
+class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
+{
+
     public function executeSync()
     {
         //https://github.com/trafiklab/gtfs-php-sdk
-        $feedUrl = $this->params->get('app.gtfs.static.url');
+        $feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
 
         //Vaciamos las tablas GTFS
         $this->clearGtfsTables();
@@ -28,62 +34,45 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer{
         $gtfsArchive = GtfsArchive::createFromPath($tmpGTFSFeed);
 
         //Insertamos las paradas
-        $stops = $gtfsArchive->getStopsFile()->getStops();
-        foreach ($stops as $stopData) {
-            $stop = new Stop();
-            $stop->setschemaId((int)$stopData->getStopId());
-            $stop->setLatitude((float)$stopData->getStopLat());
-            $stop->setLongitude((float)$stopData->getStopLon());
-            $stop->setName($stopData->getStopName());
-            $stop->setCode($stopData->getStopCode());
-            $this->em->persist($stop);
-        }
-        $this->em->flush();
+        $this->insertStops($gtfsArchive);
 
         //Las rutas
-        $routes = $gtfsArchive->getRoutesFile()->getRoutes();
-        foreach ($routes as $routeData) {
-            $route = new GtfsRoute();
-            $route->setschemaId($routeData->getRouteId());
-            $route->setName($routeData->getRouteLongName());
-            $route->setColor($routeData->getRouteTextColor());
-            $this->em->persist($route);
-        }
-        $this->em->flush();
+        $this->insertRoutes($gtfsArchive);
 
         //Los viajes
-        $trips = $gtfsArchive->getTripsFile()->getTrips();
-        $routeRepo = $this->em->getRepository(GtfsRoute::class);
-        foreach($trips as $tripData){
-            $trip = new Trip();
-            $trip->setschemaId($tripData->getTripId());
-            $trip->setschemaRouteId($tripData->getRouteId());
-            $route = $routeRepo->findOneBy(['schemaId' => $tripData->getRouteId()]);
-            $trip->setRoute($route);
-            $this->em->persist($trip);
-        }
-        $this->em->flush();
+        $this->insertTrips($gtfsArchive);
 
         //Los tiempos de parada
-        $stopTimes = $gtfsArchive->getStopTimesFile()->getStopTimes();
-        $tripRepo = $this->em->getRepository(Trip::class);
-        $stopRepo = $this->em->getRepository(Stop::class);
-        foreach($stopTimes as $stopTimeData){
-            $stopTime = new StopTime();
-            $stopTime->setschemaTripId($stopTimeData->getTripId());
-            $trip = $tripRepo->findOneBy(['schemaId' => $stopTimeData->getTripId()]);
-            $stopTime->setTrip($trip);
-            $stopTime->setArrivalTime(new DateTime($stopTimeData
-            ->getArrivalTime()));
-            $stopTime->setDepartureTime(new DateTime($stopTimeData
-            ->getDepartureTime()));
-            $stopTime->setschemaStopId($stopTimeData->getStopId());
-            $stop = $stopRepo->findOneBy(['schemaId' => $stopTimeData->getStopId()]);
-            $stopTime->setStop($stop);
-            $stopTime->setStopSequence((int)$stopTimeData->getStopSequence());
-            $this->em->persist($stopTime);
+        $this->insertStopTimes($gtfsArchive);
+        
+
+        //And now the shapes, which will be imported on the background thus their long calculation process time
+        $shapes = $gtfsArchive->getShapesFile()->getShapePoints();
+        if (!empty($shapes)) { //Shapes are optional
+            //Check every trip and 
+            dump($shapes);
+            die();
         }
-        $this->em->flush();
+    }
+
+    protected function downloadAndExtractFiles(string $url): string
+    {
+        $tmpGTFSFeed = tempnam(sys_get_temp_dir(), 'GTFS');
+        file_put_contents($tmpGTFSFeed, file_get_contents($url));
+
+        // Load the zip file.
+        $zip = new ZipArchive();
+        if ($zip->open($tmpGTFSFeed) != 'true') {
+            throw new Exception('Could not open the GTFS archive');
+        }
+        // Extract the zip file and remove it.
+        $extractionPath = substr($tmpGTFSFeed, 0, strlen($tmpGTFSFeed) - 4) . '/';
+        $zip->extractTo($extractionPath);
+        $zip->close();
+
+        unlink($tmpGTFSFeed);
+
+        return $extractionPath;
     }
 
     protected function clearGtfsTables()
@@ -98,5 +87,112 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer{
             $this->em->createQuery('DELETE FROM ' . $table)->execute();
             //$this->em->createQuery('ALTER TABLE ' . $table . ' AUTO_INCREMENT = 1')->execute();
         }
+    }
+
+    protected function insertStops(GtfsArchive $gtfsArchive)
+    {
+        $stops = $gtfsArchive->getStopsFile();
+        $hundredFlush = 100;
+        while ($stopData = $stops->next()) {
+            $stop = new Stop();
+            $stop->setschemaId($stopData->getStopId());
+            $stop->setLatitude((float)$stopData->getStopLat());
+            $stop->setLongitude((float)$stopData->getStopLon());
+            $stop->setName($stopData->getStopName());
+            $stop->setCode($stopData->getStopCode());
+            $this->em->persist($stop);
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 100;
+                $this->em->flush();
+            }
+            $stop = null;
+            $stopData = null;
+        }
+        $stops = null;
+        $this->em->flush();
+    }
+
+    protected function insertRoutes(GtfsArchive $gtfsArchive)
+    {
+
+        $hundredFlush = 100;
+        $routes = $gtfsArchive->getRoutesFile();
+        while ($routeData = $routes->next()) {
+            $route = new GtfsRoute();
+            $route->setschemaId($routeData->getRouteId());
+            $route->setName($routeData->getRouteLongName());
+            $route->setColor($routeData->getRouteTextColor());
+            $this->em->persist($route);
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 100;
+                $this->em->flush();
+            }
+            $routeData = null;
+            $route = null;
+        }
+        $routes = null;
+        $this->em->flush();
+    }
+
+    protected function insertTrips(GtfsArchive $gtfsArchive)
+    {
+        $hundredFlush = 1000;
+        $trips = $gtfsArchive->getTripsFile();
+        $routeRepo = $this->em->getRepository(GtfsRoute::class);
+        $lastRouteId = '';
+        $route = null;
+        while ($tripData = $trips->next()) {
+            $trip = new Trip();
+            $trip->setschemaId($tripData->getTripId());
+            $trip->setschemaRouteId($tripData->getRouteId());
+            if ($tripData->getRouteId() != $lastRouteId) {
+                $route = $routeRepo->findBySchemaId($tripData->getRouteId());
+                $lastRouteId = $tripData->getRouteId();
+            }
+            $trip->setRoute($route);
+            $this->em->persist($trip);
+            $trip = null;
+            $tripData = null;
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 1000;
+                $this->em->flush();
+            }
+        }
+        $trips = null;
+        $this->em->flush();
+    }
+
+    protected function insertStopTimes(GtfsArchive $gtfsArchive){
+        $hundredFlush = 100;
+        $stopTimes = $gtfsArchive->getStopTimesFile();
+        $tripRepo = $this->em->getRepository(Trip::class);
+        $stopRepo = $this->em->getRepository(Stop::class);
+        while ($stopTimeData = $stopTimes->next()) {
+            $stopTime = new StopTime();
+            $stopTime->setschemaTripId($stopTimeData->getTripId());
+            $trip = $tripRepo->findBySchemaId($stopTimeData->getTripId());
+            $stopTime->setTrip($trip);
+            $stopTime->setArrivalTime(new DateTime($stopTimeData
+                ->getArrivalTime()));
+            $stopTime->setDepartureTime(new DateTime($stopTimeData
+                ->getDepartureTime()));
+            $stopTime->setschemaStopId($stopTimeData->getStopId());
+            $stop = $stopRepo->findBySchemaId($stopTimeData->getStopId());
+            $stopTime->setStop($stop);
+            $stopTime->setStopSequence((int)$stopTimeData->getStopSequence());
+            $this->em->persist($stopTime);
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 100;
+                $this->em->flush();
+            }
+            $stopTimeData = null;
+            $stopTime = null;
+        }
+        $stopTimes = null;
+        $this->em->flush();
     }
 }

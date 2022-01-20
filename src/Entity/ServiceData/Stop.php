@@ -23,7 +23,7 @@ class Stop
     private $id;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="string", length=128)
      */
     private $schemaId;
 
@@ -62,12 +62,12 @@ class Stop
         return $this->id;
     }
 
-    public function getschemaId(): ?int
+    public function getschemaId(): ?string
     {
         return $this->schemaId;
     }
 
-    public function setschemaId(int $schemaId): self
+    public function setschemaId(string $schemaId): self
     {
         $this->schemaId = $schemaId;
 

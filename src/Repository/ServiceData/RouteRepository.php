@@ -22,6 +22,12 @@ class RouteRepository extends ServiceEntityRepository
         parent::__construct($registry, Route::class);
     }
 
+    public function findBySchemaId(string $schemaId){
+        $query = $this->createQueryBuilder('entity');
+        $query->andWhere('entity.schemaId = :schemaid')->setParameter('schemaid', $schemaId);
+        return $query->getQuery()->getOneOrNullResult();
+    }
+
     protected function findByStopQB(Stop $stop): QueryBuilder
     {
         $query = $this->createQueryBuilder('entity');

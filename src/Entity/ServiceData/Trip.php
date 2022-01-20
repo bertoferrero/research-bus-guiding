@@ -43,9 +43,15 @@ class Trip
      */
     private $stopTimes;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Shape::class, mappedBy="trip")
+     */
+    private $shapes;
+
     public function __construct()
     {
         $this->stopTimes = new ArrayCollection();
+        $this->shapes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -113,6 +119,36 @@ class Trip
             // set the owning side to null (unless already changed)
             if ($stopTime->getTrip() === $this) {
                 $stopTime->setTrip(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Shape[]
+     */
+    public function getShapes(): Collection
+    {
+        return $this->shapes;
+    }
+
+    public function addShape(Shape $shape): self
+    {
+        if (!$this->shapes->contains($shape)) {
+            $this->shapes[] = $shape;
+            $shape->setTrip($this);
+        }
+
+        return $this;
+    }
+
+    public function removeShape(Shape $shape): self
+    {
+        if ($this->shapes->removeElement($shape)) {
+            // set the owning side to null (unless already changed)
+            if ($shape->getTrip() === $this) {
+                $shape->setTrip(null);
             }
         }
 

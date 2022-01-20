@@ -19,6 +19,12 @@ class TripRepository extends ServiceEntityRepository
         parent::__construct($registry, Trip::class);
     }
 
+    public function findBySchemaId(string $schemaId){
+        $query = $this->createQueryBuilder('entity');
+        $query->andWhere('entity.schemaId = :schemaid')->setParameter('schemaid', $schemaId);
+        return $query->getQuery()->getOneOrNullResult();
+    }
+
     // /**
     //  * @return Trip[] Returns an array of Trip objects
     //  */

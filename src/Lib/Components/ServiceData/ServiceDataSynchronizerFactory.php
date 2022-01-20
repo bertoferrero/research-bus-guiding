@@ -1,14 +1,15 @@
 <?php
 namespace App\Lib\Components\ServiceData;
 
-use App\Lib\Components\ServiceData\GTFS\GtfsRTVehiclePositionSynchronizer;
-use App\Lib\Components\ServiceData\GTFS\GtfsStaticSynchronizer;
+use Psr\Log\LoggerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Lib\Components\ServiceData\GTFS\GtfsStaticSynchronizer;
+use App\Lib\Components\ServiceData\GTFS\GtfsRTVehiclePositionSynchronizer;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class ServiceDataSynchronizerFactory{
     
-    public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $params)
+    public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $params, protected LoggerInterface $logger)
     {
         
     }
@@ -16,7 +17,7 @@ class ServiceDataSynchronizerFactory{
     public function getStaticSynchronizer(){
         $synchronizer = $this->params->get('app.component.servicedatasync.static');
         return match($synchronizer){
-            'GTFS' => new GtfsStaticSynchronizer($this->em, $this->params),
+            'GTFS' => new GtfsStaticSynchronizer($this->em, $this->params, $this->logger),
             default => null
         };
     }
@@ -24,7 +25,7 @@ class ServiceDataSynchronizerFactory{
     public function getVehiclePositionSynchronizer(){
         $synchronizer = $this->params->get('app.component.servicedatasync.vehicleposition');
         return match($synchronizer){
-            'GTFS' => new GtfsRTVehiclePositionSynchronizer($this->em, $this->params),
+            'GTFS' => new GtfsRTVehiclePositionSynchronizer($this->em, $this->params, $this->logger),
             default => null
         };
     }
