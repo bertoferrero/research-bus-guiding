@@ -33,7 +33,7 @@ class Trip
     private $schemaRouteId;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Route::class, inversedBy="trips")
+     * @ORM\ManyToOne(targetEntity=Route::class, inversedBy="trips", cascade={"persist"})
      * @ORM\JoinColumn(nullable=false)
      */
     private $route;

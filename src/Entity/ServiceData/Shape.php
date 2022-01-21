@@ -28,7 +28,7 @@ class Shape
     private $schemaTripId;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Trip::class, inversedBy="shapes")
+     * @ORM\ManyToOne(targetEntity=Trip::class, inversedBy="shapes", cascade={"persist"})
      * @ORM\JoinColumn(nullable=false)
      */
     private $trip;

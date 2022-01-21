@@ -42,6 +42,11 @@ class Route
      */
     private $trips;
 
+    public function __toString()
+    {
+        return $this->schemaId;
+    }
+
     public function __construct()
     {
         $this->trips = new ArrayCollection();

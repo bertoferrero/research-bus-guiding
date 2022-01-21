@@ -45,9 +45,10 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         //Los tiempos de parada
         $this->insertStopTimes($gtfsArchive);
         
+        return;
 
         //And now the shapes, which will be imported on the background thus their long calculation process time
-        $shapes = $gtfsArchive->getShapesFile()->getShapePoints();
+        $shapes = $gtfsArchive->getShapesFile()->getAllDataRows();
         if (!empty($shapes)) { //Shapes are optional
             //Check every trip and 
             dump($shapes);
@@ -105,12 +106,14 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             if ($hundredFlush <= 0) {
                 $hundredFlush = 100;
                 $this->em->flush();
+                $this->em->clear();
             }
             $stop = null;
             $stopData = null;
         }
         $stops = null;
         $this->em->flush();
+        $this->em->clear();
     }
 
     protected function insertRoutes(GtfsArchive $gtfsArchive)
@@ -128,17 +131,19 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             if ($hundredFlush <= 0) {
                 $hundredFlush = 100;
                 $this->em->flush();
+                $this->em->clear();
             }
             $routeData = null;
             $route = null;
         }
         $routes = null;
         $this->em->flush();
+        $this->em->clear();
     }
 
     protected function insertTrips(GtfsArchive $gtfsArchive)
     {
-        $hundredFlush = 1000;
+        $hundredFlush = 100;
         $trips = $gtfsArchive->getTripsFile();
         $routeRepo = $this->em->getRepository(GtfsRoute::class);
         $lastRouteId = '';
@@ -157,42 +162,56 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             $tripData = null;
             $hundredFlush--;
             if ($hundredFlush <= 0) {
-                $hundredFlush = 1000;
+                $hundredFlush = 100;
                 $this->em->flush();
+                $this->em->clear();
+                //After clearing, it is required to reload the cached route
+                $lastRouteId = '';
             }
         }
-        $trips = null;
+        $trips = $route = null;
         $this->em->flush();
+        $this->em->clear();
     }
 
     protected function insertStopTimes(GtfsArchive $gtfsArchive){
-        $hundredFlush = 100;
+        $hundredFlush = 1000;
         $stopTimes = $gtfsArchive->getStopTimesFile();
         $tripRepo = $this->em->getRepository(Trip::class);
         $stopRepo = $this->em->getRepository(Stop::class);
+        $lastTripId = '';
+        $trip = null;
         while ($stopTimeData = $stopTimes->next()) {
             $stopTime = new StopTime();
             $stopTime->setschemaTripId($stopTimeData->getTripId());
-            $trip = $tripRepo->findBySchemaId($stopTimeData->getTripId());
+            if ($stopTimeData->getTripId() != $lastTripId) {
+                $trip = $tripRepo->findBySchemaId($stopTimeData->getTripId());
+                $lastTripId = $stopTimeData->getTripId();
+            }
             $stopTime->setTrip($trip);
+            $stop = $stopRepo->findBySchemaId($stopTimeData->getStopId());
+            $stopTime->setStop($stop);
             $stopTime->setArrivalTime(new DateTime($stopTimeData
                 ->getArrivalTime()));
             $stopTime->setDepartureTime(new DateTime($stopTimeData
                 ->getDepartureTime()));
             $stopTime->setschemaStopId($stopTimeData->getStopId());
-            $stop = $stopRepo->findBySchemaId($stopTimeData->getStopId());
-            $stopTime->setStop($stop);
             $stopTime->setStopSequence((int)$stopTimeData->getStopSequence());
             $this->em->persist($stopTime);
-            $hundredFlush--;
-            if ($hundredFlush <= 0) {
-                $hundredFlush = 100;
-                $this->em->flush();
-            }
             $stopTimeData = null;
             $stopTime = null;
+            $stop = null;
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 1000;
+                $this->em->flush();
+                $this->em->clear();
+                //After clearing, it is required to reload the cached trip
+                $lastTripId = '';
+            }
         }
-        $stopTimes = null;
+        $stopTimes = $trip = null;
         $this->em->flush();
+        $this->em->clear();
     }
 }
