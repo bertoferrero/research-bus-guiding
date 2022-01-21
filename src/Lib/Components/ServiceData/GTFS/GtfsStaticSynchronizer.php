@@ -56,26 +56,6 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         }
     }
 
-    protected function downloadAndExtractFiles(string $url): string
-    {
-        $tmpGTFSFeed = tempnam(sys_get_temp_dir(), 'GTFS');
-        file_put_contents($tmpGTFSFeed, file_get_contents($url));
-
-        // Load the zip file.
-        $zip = new ZipArchive();
-        if ($zip->open($tmpGTFSFeed) != 'true') {
-            throw new Exception('Could not open the GTFS archive');
-        }
-        // Extract the zip file and remove it.
-        $extractionPath = substr($tmpGTFSFeed, 0, strlen($tmpGTFSFeed) - 4) . '/';
-        $zip->extractTo($extractionPath);
-        $zip->close();
-
-        unlink($tmpGTFSFeed);
-
-        return $extractionPath;
-    }
-
     protected function clearGtfsTables()
     {
         $tables = [
