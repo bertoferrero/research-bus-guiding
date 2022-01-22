@@ -12,6 +12,8 @@ use App\Entity\ServiceData\Trip;
 use App\Entity\ServiceData\StopTime;
 use Trafiklab\Gtfs\Model\GtfsArchive;
 use App\Entity\ServiceData\Route as GtfsRoute;
+use App\Message\ServiceData\ShapeImportingInitMessage;
+use App\Message\ServiceData\GTFSShapeImportingInitMessage;
 use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
 
 class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
@@ -23,7 +25,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
 
         //Vaciamos las tablas GTFS
-        $this->clearGtfsTables();
+        //$this->clearGtfsTables();
 
         //No podemos descargar por url porque el burro ha puesto la ruta absoluta /tmp
         //$gtfsArchive = GtfsArchive::createFromUrl($feedUrl);
@@ -34,25 +36,23 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $gtfsArchive = GtfsArchive::createFromPath($tmpGTFSFeed);
 
         //Insertamos las paradas
-        $this->insertStops($gtfsArchive);
+        //$this->insertStops($gtfsArchive);
 
         //Las rutas
-        $this->insertRoutes($gtfsArchive);
+        //$this->insertRoutes($gtfsArchive);
 
         //Los viajes
-        $this->insertTrips($gtfsArchive);
+        //$this->insertTrips($gtfsArchive);
 
         //Los tiempos de parada
-        $this->insertStopTimes($gtfsArchive);
-        
-        return;
+        //$this->insertStopTimes($gtfsArchive);
+
+        //return;
 
         //And now the shapes, which will be imported on the background thus their long calculation process time
-        $shapes = $gtfsArchive->getShapesFile()->getAllDataRows();
+        $shapes = $gtfsArchive->getShapesFile()->getAllDataRows(true);
         if (!empty($shapes)) { //Shapes are optional
-            //Check every trip and 
-            dump($shapes);
-            die();
+            $this->bus->dispatch(new GTFSShapeImportingInitMessage($shapes));
         }
     }
 
@@ -131,6 +131,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         while ($tripData = $trips->next()) {
             $trip = new Trip();
             $trip->setschemaId($tripData->getTripId());
+            $trip->setSchemaShapeId($tripData->getShapeId());
             $trip->setschemaRouteId($tripData->getRouteId());
             if ($tripData->getRouteId() != $lastRouteId) {
                 $route = $routeRepo->findBySchemaId($tripData->getRouteId());

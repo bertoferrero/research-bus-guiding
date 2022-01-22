@@ -48,6 +48,11 @@ class Trip
      */
     private $shapes;
 
+    /**
+     * @ORM\Column(type="string", length=128, nullable=true)
+     */
+    private $schema_shape_id;
+
     public function __construct()
     {
         $this->stopTimes = new ArrayCollection();
@@ -151,6 +156,18 @@ class Trip
                 $shape->setTrip(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getSchemaShapeId(): ?string
+    {
+        return $this->schema_shape_id;
+    }
+
+    public function setSchemaShapeId(?string $schema_shape_id): self
+    {
+        $this->schema_shape_id = $schema_shape_id;
 
         return $this;
     }

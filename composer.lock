@@ -6887,12 +6887,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/bertoferrero/gtfs-php-sdk.git",
-                "reference": "17b56e3f3abbeff08b506fc30e5057b3e4e5476f"
+                "reference": "123dffc326d9920b51f488b046c0b99b938639e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bertoferrero/gtfs-php-sdk/zipball/17b56e3f3abbeff08b506fc30e5057b3e4e5476f",
-                "reference": "17b56e3f3abbeff08b506fc30e5057b3e4e5476f",
+                "url": "https://api.github.com/repos/bertoferrero/gtfs-php-sdk/zipball/123dffc326d9920b51f488b046c0b99b938639e6",
+                "reference": "123dffc326d9920b51f488b046c0b99b938639e6",
                 "shasum": ""
             },
             "require": {
@@ -6940,7 +6940,7 @@
             "support": {
                 "source": "https://github.com/bertoferrero/gtfs-php-sdk/tree/master"
             },
-            "time": "2022-01-21T23:15:28+00:00"
+            "time": "2022-01-21T23:40:38+00:00"
         },
         {
             "name": "twig/twig",
