@@ -15,6 +15,8 @@ use App\Entity\ServiceData\Trip;
 use App\Entity\ServiceData\StopTime;
 use Trafiklab\Gtfs\Model\GtfsArchive;
 use App\Entity\ServiceData\Route as GtfsRoute;
+use App\Entity\ServiceData\Shape;
+use App\Entity\ServiceData\ShapeRaw;
 use App\Message\ServiceData\ShapeImportingInitMessage;
 use App\Message\ServiceData\GTFSShapeImportingInitMessage;
 use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
@@ -60,6 +62,9 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 
         //And now, define the hours range
         $this->defineTripsHoursRange();
+
+        //Prepare shapes raw data
+        $this->insertShapesRaw($gtfsArchive);
         return;
 
         //And now the shapes, which will be imported on the background thus their long calculation process time
@@ -334,6 +339,31 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             }
         }
         $stopTimes = $trip = null;
+        $this->em->flush();
+        $this->em->clear();
+    }
+
+    protected function insertShapesRaw(GtfsArchive $gtfsArchive)
+    {
+        $shapes = $gtfsArchive->getShapesFile();
+        $hundredFlush = 100;
+        while ($shapeData = $shapes->next()) {
+            $shape = new ShapeRaw();
+            $shape->setSchemaId($shapeData->getShapeId());
+            $shape->setLatitude($shapeData->getShapePtLat());
+            $shape->setLongitude($shapeData->getShapePtLon());
+            $shape->setSequence($shapeData->getShapePtSequence());
+            $this->em->persist($shape);
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 100;
+                $this->em->flush();
+                $this->em->clear();
+            }
+            $shape = null;
+            $shapeData = null;
+        }
+        $shapes = null;
         $this->em->flush();
         $this->em->clear();
     }
