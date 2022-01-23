@@ -31,6 +31,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         //https://github.com/trafiklab/gtfs-php-sdk
         $feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
 
+        return;
         //Vaciamos las tablas GTFS
         $this->clearGtfsTables();
 
@@ -62,6 +63,9 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 
         //And now, define the hours range
         $this->defineTripsHoursRange();
+
+        //And the md5 stop sequence
+        $this->createTripMd5StopSequence();
 
         //Prepare shapes raw data
         $this->insertShapesRaw($gtfsArchive);
@@ -384,4 +388,16 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $queryBuilder->where('t.hourStart IS NULL OR t.hourEnd IS NULL');
         $queryBuilder->getQuery()->execute();
     }
+
+    protected function createTripMd5StopSequence(){
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->update(Trip::class, 't');
+        $queryBuilder->set('t.md5StopSequence','(SELECT MD5(CONCAT(trip.schemaRouteId,\'-\',group_concat(stopt.schemaStopId),\'-\',group_concat(stopt.stopSequence))) FROM '.Trip::class.' as trip
+        INNER JOIN trip.stopTimes stopt 
+        WHERE trip = t
+        group by trip)');
+        $queryBuilder->getQuery()->execute();
+    }
 }
+
+//CONCAT(trip.schemaRouteId,"-",group_concat(stopt.stop_id),"-",group_concat(stopt.stop_sequence))

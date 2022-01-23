@@ -44,11 +44,6 @@ class Trip
     private $stopTimes;
 
     /**
-     * @ORM\OneToMany(targetEntity=Shape::class, mappedBy="trip")
-     */
-    private $shapes;
-
-    /**
      * @ORM\Column(type="string", length=128, nullable=true)
      */
     private $schemaShapeId;
@@ -73,6 +68,11 @@ class Trip
      * @ORM\Column(type="time", nullable=true)
      */
     private $hourEnd;
+
+    /**
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private $md5StopSequence;
 
     public function __construct()
     {
@@ -151,36 +151,6 @@ class Trip
         return $this;
     }
 
-    /**
-     * @return Collection|Shape[]
-     */
-    public function getShapes(): Collection
-    {
-        return $this->shapes;
-    }
-
-    public function addShape(Shape $shape): self
-    {
-        if (!$this->shapes->contains($shape)) {
-            $this->shapes[] = $shape;
-            $shape->setTrip($this);
-        }
-
-        return $this;
-    }
-
-    public function removeShape(Shape $shape): self
-    {
-        if ($this->shapes->removeElement($shape)) {
-            // set the owning side to null (unless already changed)
-            if ($shape->getTrip() === $this) {
-                $shape->setTrip(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function getSchemaShapeId(): ?string
     {
         return $this->schemaShapeId;
@@ -237,6 +207,18 @@ class Trip
     public function setHourEnd(?\DateTimeInterface $hourEnd): self
     {
         $this->hourEnd = $hourEnd;
+
+        return $this;
+    }
+
+    public function getMd5StopSequence(): ?string
+    {
+        return $this->md5StopSequence;
+    }
+
+    public function setMd5StopSequence(?string $md5StopSequence): self
+    {
+        $this->md5StopSequence = $md5StopSequence;
 
         return $this;
     }

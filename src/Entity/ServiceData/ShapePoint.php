@@ -6,9 +6,9 @@ use App\Repository\ServiceData\ShapeRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass=ShapeRepository::class)
+ * @ORM\Entity(repositoryClass=ShapePointRepository::class)
  */
-class Shape
+class ShapePoint
 {
     /**
      * @ORM\Id
@@ -23,17 +23,6 @@ class Shape
     private $schemaId;
 
     /**
-     * @ORM\Column(type="string", length=128)
-     */
-    private $schemaTripId;
-
-    /**
-     * @ORM\ManyToOne(targetEntity=Trip::class, inversedBy="shapes", cascade={"persist"})
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $trip;
-
-    /**
      * @ORM\Column(type="float")
      */
     private $latitude;
@@ -44,13 +33,13 @@ class Shape
     private $longitude;
 
     /**
-     * @ORM\OneToOne(targetEntity=Shape::class, cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity=ShapePoint::class, cascade={"persist", "remove"})
      * @ORM\JoinColumn(onDelete="SET NULL")
      */
     private $nextPoint;
 
     /**
-     * @ORM\OneToOne(targetEntity=Shape::class, cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity=ShapePoint::class, cascade={"persist", "remove"})
      * @ORM\JoinColumn(onDelete="SET NULL")
      */
     private $prevPoint;
@@ -83,30 +72,6 @@ class Shape
     public function setSchemaId(string $schemaId): self
     {
         $this->schemaId = $schemaId;
-
-        return $this;
-    }
-
-    public function getSchemaTripId(): ?string
-    {
-        return $this->schemaTripId;
-    }
-
-    public function setSchemaTripId(string $schemaTripId): self
-    {
-        $this->schemaTripId = $schemaTripId;
-
-        return $this;
-    }
-
-    public function getTrip(): ?Trip
-    {
-        return $this->trip;
-    }
-
-    public function setTrip(?Trip $trip): self
-    {
-        $this->trip = $trip;
 
         return $this;
     }

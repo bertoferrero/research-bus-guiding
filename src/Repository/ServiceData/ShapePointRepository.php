@@ -2,7 +2,7 @@
 
 namespace App\Repository\ServiceData;
 
-use App\Entity\ServiceData\Shape;
+use App\Entity\ServiceData\ShapePoint;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -12,15 +12,15 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method Shape[]    findAll()
  * @method Shape[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class ShapeRepository extends ServiceEntityRepository
+class ShapePointRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Shape::class);
+        parent::__construct($registry, ShapePoint::class);
     }
 
     // /**
-    //  * @return Shape[] Returns an array of Shape objects
+    //  * @return ShapePoint[] Returns an array of ShapePoint objects
     //  */
     /*
     public function findByExampleField($value)
@@ -37,7 +37,7 @@ class ShapeRepository extends ServiceEntityRepository
     */
 
     /*
-    public function findOneBySomeField($value): ?Shape
+    public function findOneBySomeField($value): ?ShapePoint
     {
         return $this->createQueryBuilder('s')
             ->andWhere('s.exampleField = :val')
