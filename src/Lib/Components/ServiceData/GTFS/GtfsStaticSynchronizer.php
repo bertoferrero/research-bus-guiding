@@ -5,6 +5,7 @@ namespace App\Lib\Components\ServiceData\GTFS;
 use App\Entity\ServiceData\Calendar;
 use App\Entity\ServiceData\CalendarDates;
 use App\Entity\ServiceData\CalendarPlan;
+use App\Entity\ServiceData\Frequencies;
 use DateTime;
 use Exception;
 use ZipArchive;
@@ -18,6 +19,7 @@ use App\Message\ServiceData\ShapeImportingInitMessage;
 use App\Message\ServiceData\GTFSShapeImportingInitMessage;
 use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
 use Trafiklab\Gtfs\Model\Entities\CalendarDate;
+use Trafiklab\Gtfs\Model\Entities\Frequency;
 
 class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 {
@@ -41,6 +43,9 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         //Insert Calendar service information
         $this->insertCalendars($gtfsArchive);
 
+        //Frequencies
+        $this->insertFrequencies($gtfsArchive);
+
         //Insertamos las paradas
         $this->insertStops($gtfsArchive);
 
@@ -53,6 +58,8 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         //Los tiempos de parada
         $this->insertStopTimes($gtfsArchive);
 
+        //And now, define the hours range
+        $this->defineTripsHoursRange();
         return;
 
         //And now the shapes, which will be imported on the background thus their long calculation process time
@@ -71,7 +78,8 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             GtfsRoute::class,
             CalendarPlan::class,
             CalendarDates::class,
-            Calendar::class
+            Calendar::class,
+            Frequencies::class
         ];
         foreach ($tables as $table) {
             $this->em->createQuery('DELETE FROM ' . $table)->execute();
@@ -162,6 +170,37 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $calendarDates = null;
         $this->em->flush();
         $this->em->clear();
+    }
+
+    protected function insertFrequencies(GtfsArchive $gtfsArchive)
+    {
+        $frequencies = $gtfsArchive->getFrequenciesFile();
+        $hundredFlush = 100;
+        while ($frequencyData = $frequencies->next()) {
+
+            //Create the frequency object
+            $frequency = new Frequencies();
+
+            $frequency->setSchemaTripId($frequencyData->getTripId());
+            $frequency->setStartTime($frequencyData->getStartTime());
+            $frequency->setEndTime($frequencyData->getEndTime());
+            $frequency->setHeadwaySecs($frequencyData->getHeadwaySecs());
+            $this->em->persist($frequency);
+
+            $frequency = null;
+            $frequencyData = null;
+
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 100;
+                $this->em->flush();
+                $this->em->clear();
+            }
+        }
+        $frequencies = null;
+        $this->em->flush();
+        $this->em->clear();
+
     }
 
     protected function insertStops(GtfsArchive $gtfsArchive)
@@ -297,5 +336,22 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $stopTimes = $trip = null;
         $this->em->flush();
         $this->em->clear();
+    }
+
+    protected function defineTripsHoursRange(){
+        //First, hours from frequencies
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->update(Trip::class, 't');
+        $queryBuilder->set('t.hourStart', '(SELECT MIN(fq.startTime) FROM '.Frequencies::class.' as fq WHERE fq.schemaTripId = t.schemaId)');
+        $queryBuilder->set('t.hourEnd', '(SELECT MAX(fq2.endTime) FROM '.Frequencies::class.' as fq2 WHERE fq2.schemaTripId = t.schemaId)');
+        $queryBuilder->getQuery()->execute();
+
+        //Then, the not matched rows, from stop_times
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->update(Trip::class, 't');
+        $queryBuilder->set('t.hourStart', '(SELECT MIN(st.arrivalTime) FROM '.StopTime::class.' as st WHERE st.trip = t)');
+        $queryBuilder->set('t.hourEnd', '(SELECT MAX(st2.departureTime) FROM '.StopTime::class.' as st2 WHERE st2.trip = t)');
+        $queryBuilder->where('t.hourStart IS NULL OR t.hourEnd IS NULL');
+        $queryBuilder->getQuery()->execute();
     }
 }

@@ -64,6 +64,16 @@ class Trip
      */
     private $calendar;
 
+    /**
+     * @ORM\Column(type="time", nullable=true)
+     */
+    private $hourStart;
+
+    /**
+     * @ORM\Column(type="time", nullable=true)
+     */
+    private $hourEnd;
+
     public function __construct()
     {
         $this->stopTimes = new ArrayCollection();
@@ -203,6 +213,30 @@ class Trip
     public function setCalendar(?Calendar $calendar): self
     {
         $this->calendar = $calendar;
+
+        return $this;
+    }
+
+    public function getHourStart(): ?\DateTimeInterface
+    {
+        return $this->hourStart;
+    }
+
+    public function setHourStart(?\DateTimeInterface $hourStart): self
+    {
+        $this->hourStart = $hourStart;
+
+        return $this;
+    }
+
+    public function getHourEnd(): ?\DateTimeInterface
+    {
+        return $this->hourEnd;
+    }
+
+    public function setHourEnd(?\DateTimeInterface $hourEnd): self
+    {
+        $this->hourEnd = $hourEnd;
 
         return $this;
     }
