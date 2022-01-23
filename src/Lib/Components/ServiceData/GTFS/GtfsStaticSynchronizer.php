@@ -2,7 +2,9 @@
 
 namespace App\Lib\Components\ServiceData\GTFS;
 
-
+use App\Entity\ServiceData\Calendar;
+use App\Entity\ServiceData\CalendarDates;
+use App\Entity\ServiceData\CalendarPlan;
 use DateTime;
 use Exception;
 use ZipArchive;
@@ -15,6 +17,7 @@ use App\Entity\ServiceData\Route as GtfsRoute;
 use App\Message\ServiceData\ShapeImportingInitMessage;
 use App\Message\ServiceData\GTFSShapeImportingInitMessage;
 use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
+use Trafiklab\Gtfs\Model\Entities\CalendarDate;
 
 class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 {
@@ -25,7 +28,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
 
         //Vaciamos las tablas GTFS
-        //$this->clearGtfsTables();
+        $this->clearGtfsTables();
 
         //No podemos descargar por url porque el burro ha puesto la ruta absoluta /tmp
         //$gtfsArchive = GtfsArchive::createFromUrl($feedUrl);
@@ -35,19 +38,22 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         file_put_contents($tmpGTFSFeed, file_get_contents($feedUrl));
         $gtfsArchive = GtfsArchive::createFromPath($tmpGTFSFeed);
 
+        //Insert Calendar service information
+        $this->insertCalendars($gtfsArchive);
+
         //Insertamos las paradas
-        //$this->insertStops($gtfsArchive);
+        $this->insertStops($gtfsArchive);
 
         //Las rutas
-        //$this->insertRoutes($gtfsArchive);
+        $this->insertRoutes($gtfsArchive);
 
         //Los viajes
-        //$this->insertTrips($gtfsArchive);
+        $this->insertTrips($gtfsArchive);
 
         //Los tiempos de parada
-        //$this->insertStopTimes($gtfsArchive);
+        $this->insertStopTimes($gtfsArchive);
 
-        //return;
+        return;
 
         //And now the shapes, which will be imported on the background thus their long calculation process time
         $shapes = $gtfsArchive->getShapesFile()->getAllDataRows(true);
@@ -63,11 +69,99 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             Stop::class,
             Trip::class,
             GtfsRoute::class,
+            CalendarPlan::class,
+            CalendarDates::class,
+            Calendar::class
         ];
         foreach ($tables as $table) {
             $this->em->createQuery('DELETE FROM ' . $table)->execute();
             //$this->em->createQuery('ALTER TABLE ' . $table . ' AUTO_INCREMENT = 1')->execute();
         }
+    }
+
+    protected function insertCalendars(GtfsArchive $gtfsArchive)
+    {
+        $calendarRepo = $this->em->getRepository(Calendar::class);
+        //First we take care of calendar plans
+        $calendarPlans = $gtfsArchive->getCalendarFile();
+        $hundredFlush = 100;
+        $weekDays = [
+            'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+        ];
+        while ($calendarData = $calendarPlans->next()) {
+            //Search the main calendar entity
+            $calendar = $calendarRepo->findBySchemaId($calendarData->getServiceId(), true);
+            $calendar->setSchemaId($calendarData->getServiceId());
+            $this->em->persist($calendar);
+
+            //Create the calendar plan
+            $currentCalendarPlan = $calendar->getCalendarPlan();
+            if ($currentCalendarPlan != null) {
+                throw new Exception("There are two calendars with the same service id");
+            }
+
+            $calendarPlan = new CalendarPlan();
+            $calendarPlan->setSchemaId($calendarData->getServiceId());
+            foreach ($weekDays as $weekDay) {
+                $calendarPlan->{"set$weekDay"}(($calendarData->{"get$weekDay"}() == 1));
+            }
+            $calendarPlan->setStartDate($calendarData->getStartDate());
+            $calendarPlan->setEndDate($calendarData->getEndDate());
+            $calendarPlan->setCalendar($calendar);
+            $this->em->persist($calendarPlan);
+
+            $calendar = null;
+            $calendarData = null;
+            $calendarPlan = null;
+
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 100;
+                $this->em->flush();
+                $this->em->clear();
+            }
+        }
+        $calendarPlans = null;
+        $this->em->flush();
+        $this->em->clear();
+
+        //Now, calendar dates with exceptions and special service days
+        $calendarDateRepo = $this->em->getRepository(CalendarDates::class);
+        $calendarDates = $gtfsArchive->getCalendarDatesFile();
+        $hundredFlush = 100;
+        while ($calendarDateData = $calendarDates->next()) {
+            //Search the main calendar entity
+            $calendar = $calendarRepo->findBySchemaId($calendarDateData->getServiceId(), true);
+            $calendar->setSchemaId($calendarDateData->getServiceId());
+            $this->em->persist($calendar);
+
+            //Find anti collision
+            $calendarDate = $calendarDateRepo->findOneBy(['schemaId' => $calendarDateData->getServiceId(), 'date' => $calendarDateData->getDate()]);
+            if ($calendarDate != null) {
+                throw new Exception("There are two calendars dates with the same service id and date");
+            }
+
+            $calendarDate = new CalendarDates();
+            $calendarDate->setSchemaId($calendarDateData->getServiceId());
+            $calendarDate->setDate($calendarDateData->getDate());
+            $calendarDate->setIsRemovingDate($calendarDateData->getExceptionType() == 2);
+            $calendarDate->setCalendar($calendar);
+            $this->em->persist($calendarDate);
+
+            $calendar = null;
+            $calendarDate = null;
+            $calendarDateData = null;
+
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 100;
+                $this->em->flush();
+                $this->em->clear();
+            }
+        }
+        $calendarDates = null;
+        $this->em->flush();
+        $this->em->clear();
     }
 
     protected function insertStops(GtfsArchive $gtfsArchive)
@@ -126,6 +220,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $hundredFlush = 100;
         $trips = $gtfsArchive->getTripsFile();
         $routeRepo = $this->em->getRepository(GtfsRoute::class);
+        $calendarRepo = $this->em->getRepository(Calendar::class);
         $lastRouteId = '';
         $route = null;
         while ($tripData = $trips->next()) {
@@ -138,9 +233,16 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
                 $lastRouteId = $tripData->getRouteId();
             }
             $trip->setRoute($route);
+            $calendar = $calendarRepo->findBySchemaId($tripData->getServiceId());
+            if($calendar == null){
+                throw new \Exception("Service id from trip cannot be found on calendar\'s table: ".$tripData->getServiceId());
+            }
+            $trip->setSchemaServiceId($tripData->getServiceId());
+            $trip->setCalendar($calendar);
             $this->em->persist($trip);
             $trip = null;
             $tripData = null;
+            $calendar = null;
             $hundredFlush--;
             if ($hundredFlush <= 0) {
                 $hundredFlush = 100;
@@ -155,7 +257,8 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $this->em->clear();
     }
 
-    protected function insertStopTimes(GtfsArchive $gtfsArchive){
+    protected function insertStopTimes(GtfsArchive $gtfsArchive)
+    {
         $hundredFlush = 1000;
         $stopTimes = $gtfsArchive->getStopTimesFile();
         $tripRepo = $this->em->getRepository(Trip::class);

@@ -51,7 +51,18 @@ class Trip
     /**
      * @ORM\Column(type="string", length=128, nullable=true)
      */
-    private $schema_shape_id;
+    private $schemaShapeId;
+
+    /**
+     * @ORM\Column(type="string", length=128, nullable=false)
+     */
+    private $schemaServiceId;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Calendar::class, inversedBy="trips")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $calendar;
 
     public function __construct()
     {
@@ -162,12 +173,36 @@ class Trip
 
     public function getSchemaShapeId(): ?string
     {
-        return $this->schema_shape_id;
+        return $this->schemaShapeId;
     }
 
-    public function setSchemaShapeId(?string $schema_shape_id): self
+    public function setSchemaShapeId(?string $schemaShapeId): self
     {
-        $this->schema_shape_id = $schema_shape_id;
+        $this->schemaShapeId = $schemaShapeId;
+
+        return $this;
+    }
+
+    public function getSchemaServiceId(): ?string
+    {
+        return $this->schemaServiceId;
+    }
+
+    public function setSchemaServiceId(string $schemaServiceId): self
+    {
+        $this->schemaServiceId = $schemaServiceId;
+
+        return $this;
+    }
+
+    public function getCalendar(): ?Calendar
+    {
+        return $this->calendar;
+    }
+
+    public function setCalendar(?Calendar $calendar): self
+    {
+        $this->calendar = $calendar;
 
         return $this;
     }
