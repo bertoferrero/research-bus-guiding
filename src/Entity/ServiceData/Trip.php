@@ -74,6 +74,11 @@ class Trip
      */
     private $md5StopSequence;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Shape::class, inversedBy="trips",cascade={"persist"})
+     */
+    private $shape;
+
     public function __construct()
     {
         $this->stopTimes = new ArrayCollection();
@@ -219,6 +224,18 @@ class Trip
     public function setMd5StopSequence(?string $md5StopSequence): self
     {
         $this->md5StopSequence = $md5StopSequence;
+
+        return $this;
+    }
+
+    public function getShape(): ?Shape
+    {
+        return $this->shape;
+    }
+
+    public function setShape(?Shape $shape): self
+    {
+        $this->shape = $shape;
 
         return $this;
     }

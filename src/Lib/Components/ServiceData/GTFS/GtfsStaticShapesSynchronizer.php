@@ -12,16 +12,9 @@ class GtfsStaticShapesSynchronizer{
         
     }
 
-    /**
-     * This method will replace the shape database information with the data in the data array
-     *
-     * @param array $data
-     * @return void
-     */
-    public function synchronizeFromData(array $data){
-        dump($data);die();
-        //We will need the search for the shape used on each trip. Each one will be processed individually
-        $trips = $this->em->getRepository(Trip::class);
+    
+    public function generateShapePoints(Shape $shape){
+        dump($shape);die();
     }
 
 

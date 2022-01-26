@@ -59,6 +59,12 @@ class ShapePoint
      */
     private $nextStopRemainingDistance = 0;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Shape::class, inversedBy="shapePoints")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $shape;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -156,6 +162,18 @@ class ShapePoint
     public function setNextStopRemainingDistance(float $nextStopRemainingDistance): self
     {
         $this->nextStopRemainingDistance = $nextStopRemainingDistance;
+
+        return $this;
+    }
+
+    public function getShape(): ?Shape
+    {
+        return $this->shape;
+    }
+
+    public function setShape(?Shape $shape): self
+    {
+        $this->shape = $shape;
 
         return $this;
     }

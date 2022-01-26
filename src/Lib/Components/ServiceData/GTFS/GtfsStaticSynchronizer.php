@@ -20,6 +20,8 @@ use App\Entity\ServiceData\ShapeRaw;
 use App\Message\ServiceData\ShapeImportingInitMessage;
 use App\Message\ServiceData\GTFSShapeImportingInitMessage;
 use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
+use App\Message\ServiceData\GTFSShapePointGenerateMessage;
+use Doctrine\ORM\EntityManagerInterface;
 use Trafiklab\Gtfs\Model\Entities\CalendarDate;
 use Trafiklab\Gtfs\Model\Entities\Frequency;
 
@@ -31,6 +33,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         //https://github.com/trafiklab/gtfs-php-sdk
         $feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
 
+        $this->createPrecalculatedShapes();
         return;
         //Vaciamos las tablas GTFS
         $this->clearGtfsTables();
@@ -69,13 +72,6 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 
         //Prepare shapes raw data
         $this->insertShapesRaw($gtfsArchive);
-        return;
-
-        //And now the shapes, which will be imported on the background thus their long calculation process time
-        $shapes = $gtfsArchive->getShapesFile()->getAllDataRows(true);
-        if (!empty($shapes)) { //Shapes are optional
-            $this->bus->dispatch(new GTFSShapeImportingInitMessage($shapes));
-        }
     }
 
     protected function clearGtfsTables()
@@ -209,7 +205,6 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $frequencies = null;
         $this->em->flush();
         $this->em->clear();
-
     }
 
     protected function insertStops(GtfsArchive $gtfsArchive)
@@ -282,8 +277,8 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             }
             $trip->setRoute($route);
             $calendar = $calendarRepo->findBySchemaId($tripData->getServiceId());
-            if($calendar == null){
-                throw new \Exception("Service id from trip cannot be found on calendar\'s table: ".$tripData->getServiceId());
+            if ($calendar == null) {
+                throw new \Exception("Service id from trip cannot be found on calendar\'s table: " . $tripData->getServiceId());
             }
             $trip->setSchemaServiceId($tripData->getServiceId());
             $trip->setCalendar($calendar);
@@ -372,31 +367,76 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $this->em->clear();
     }
 
-    protected function defineTripsHoursRange(){
+    protected function defineTripsHoursRange()
+    {
         //First, hours from frequencies
         $queryBuilder = $this->em->createQueryBuilder();
         $queryBuilder->update(Trip::class, 't');
-        $queryBuilder->set('t.hourStart', '(SELECT MIN(fq.startTime) FROM '.Frequencies::class.' as fq WHERE fq.schemaTripId = t.schemaId)');
-        $queryBuilder->set('t.hourEnd', '(SELECT MAX(fq2.endTime) FROM '.Frequencies::class.' as fq2 WHERE fq2.schemaTripId = t.schemaId)');
+        $queryBuilder->set('t.hourStart', '(SELECT MIN(fq.startTime) FROM ' . Frequencies::class . ' as fq WHERE fq.schemaTripId = t.schemaId)');
+        $queryBuilder->set('t.hourEnd', '(SELECT MAX(fq2.endTime) FROM ' . Frequencies::class . ' as fq2 WHERE fq2.schemaTripId = t.schemaId)');
         $queryBuilder->getQuery()->execute();
 
         //Then, the not matched rows, from stop_times
         $queryBuilder = $this->em->createQueryBuilder();
         $queryBuilder->update(Trip::class, 't');
-        $queryBuilder->set('t.hourStart', '(SELECT MIN(st.arrivalTime) FROM '.StopTime::class.' as st WHERE st.trip = t)');
-        $queryBuilder->set('t.hourEnd', '(SELECT MAX(st2.departureTime) FROM '.StopTime::class.' as st2 WHERE st2.trip = t)');
+        $queryBuilder->set('t.hourStart', '(SELECT MIN(st.arrivalTime) FROM ' . StopTime::class . ' as st WHERE st.trip = t)');
+        $queryBuilder->set('t.hourEnd', '(SELECT MAX(st2.departureTime) FROM ' . StopTime::class . ' as st2 WHERE st2.trip = t)');
         $queryBuilder->where('t.hourStart IS NULL OR t.hourEnd IS NULL');
         $queryBuilder->getQuery()->execute();
     }
 
-    protected function createTripMd5StopSequence(){
+    protected function createTripMd5StopSequence()
+    {
         $queryBuilder = $this->em->createQueryBuilder();
         $queryBuilder->update(Trip::class, 't');
-        $queryBuilder->set('t.md5StopSequence','(SELECT MD5(CONCAT(trip.schemaRouteId,\'-\',group_concat(stopt.schemaStopId),\'-\',group_concat(stopt.stopSequence))) FROM '.Trip::class.' as trip
+        $queryBuilder->set('t.md5StopSequence', '(SELECT MD5(CONCAT(trip.schemaRouteId,\'-\',group_concat(stopt.schemaStopId),\'-\',group_concat(stopt.stopSequence))) FROM ' . Trip::class . ' as trip
         INNER JOIN trip.stopTimes stopt 
         WHERE trip = t
         group by trip)');
         $queryBuilder->getQuery()->execute();
+    }
+
+    protected function createPrecalculatedShapes()
+    {
+        //First get all the trips
+        $trips = $this->em->getRepository(Trip::class)->findAll();
+        $shapeRepo = $this->em->getRepository(Shape::class);
+        $hundredFlush = 100;
+        foreach ($trips as $trip) {
+            if (!empty($trip->getSchemaShapeId())) {
+                $stopMd5 = $trip->getMd5StopSequence();
+                if (empty($stopMd5)) {
+                    throw new Exception('There are trips without md5stopsequence');
+                }
+                $shape = $shapeRepo->findOneBy(['md5StopSequence' => $stopMd5]);
+                //If shape does not exists, is time to create the basic entity and order to generate all the points
+                if ($shape == null) {
+                    $shape = new Shape();
+                    $shape->setSchemaId($trip->getSchemaShapeId());
+                    $shape->setMd5StopSequence($stopMd5);
+                    $shape->addTrip($trip);
+                    $this->em->persist($shape);
+                    $this->em->flush();
+                    //Message to generate points
+                    $this->bus->dispatch(new GTFSShapePointGenerateMessage($shape));
+                    $hundredFlush = 100;
+                } else {
+                    $trip->setShape($shape);
+                    $this->em->persist($trip);
+
+                    $hundredFlush--;
+                    if ($hundredFlush <= 0) {
+                        $hundredFlush = 100;
+                        $this->em->flush();
+                    }
+                }
+                $shape = null;
+                $trip = null;
+            }
+        }
+        $trips = null;
+        $this->em->flush();
+        $this->em->clear();
     }
 }
 
