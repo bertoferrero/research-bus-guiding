@@ -2,7 +2,7 @@
 
 namespace App\Entity\ServiceData;
 
-use App\Repository\ServiceData\ShapeRepository;
+use App\Repository\ServiceData\ShapePointRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -16,11 +16,6 @@ class ShapePoint
      * @ORM\Column(type="integer")
      */
     private $id;
-
-    /**
-     * @ORM\Column(type="string", length=128)
-     */
-    private $schemaId;
 
     /**
      * @ORM\Column(type="float")
@@ -70,18 +65,6 @@ class ShapePoint
         return $this->id;
     }
 
-    public function getSchemaId(): ?string
-    {
-        return $this->schemaId;
-    }
-
-    public function setSchemaId(string $schemaId): self
-    {
-        $this->schemaId = $schemaId;
-
-        return $this;
-    }
-
     public function getLatitude(): ?float
     {
         return $this->latitude;
@@ -113,7 +96,15 @@ class ShapePoint
 
     public function setNextPoint(?self $nextPoint): self
     {
+        $originalNextPoint = $this->nextPoint;
         $this->nextPoint = $nextPoint;
+        
+        if($nextPoint != null && $nextPoint->getPrevPoint() !== $this){
+            $nextPoint->setPrevPoint($this);
+        }
+        elseif($nextPoint == null && $originalNextPoint != null){
+            $originalNextPoint->setPrevPoint(null);
+        }
 
         return $this;
     }
@@ -125,7 +116,16 @@ class ShapePoint
 
     public function setPrevPoint(?self $prevPoint): self
     {
+        $originalPrevPoint = $this->prevPoint;
         $this->prevPoint = $prevPoint;
+
+        // set the owning side of the relation if necessary
+        if ($prevPoint != null && $prevPoint->getNextPoint() !== $this) {
+            $prevPoint->setNextPoint($this);
+        }
+        elseif($prevPoint == null && $originalPrevPoint != null){
+            $originalPrevPoint->setNextPoint(null);
+        }
 
         return $this;
     }

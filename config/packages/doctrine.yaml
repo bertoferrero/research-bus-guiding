@@ -26,6 +26,11 @@ doctrine:
                 dir: "%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Loggable/Entity"
         
         dql:
+            numeric_functions:
+                acos: DoctrineExtensions\Query\Mysql\Acos
+                cos: DoctrineExtensions\Query\Mysql\Cos
+                radians: DoctrineExtensions\Query\Mysql\Radians
+                sin: DoctrineExtensions\Query\Mysql\Sin
             string_functions:
                 md5: DoctrineExtensions\Query\Mysql\Md5
                 group_concat: DoctrineExtensions\Query\Mysql\GroupConcat

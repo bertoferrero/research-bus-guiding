@@ -33,8 +33,10 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         //https://github.com/trafiklab/gtfs-php-sdk
         $feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
 
-        $this->createPrecalculatedShapes();
+        $shape = $this->em->find(Shape::class, 1);
+        $this->bus->dispatch(new GTFSShapePointGenerateMessage($shape));
         return;
+
         //Vaciamos las tablas GTFS
         $this->clearGtfsTables();
 
@@ -72,11 +74,15 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 
         //Prepare shapes raw data
         $this->insertShapesRaw($gtfsArchive);
+
+        //Generate the internal precalculated shapepoints        
+        $this->createPrecalculatedShapes();
     }
 
     protected function clearGtfsTables()
     {
         $tables = [
+            ShapePoints::class,
             StopTime::class,
             Stop::class,
             Trip::class,
@@ -84,11 +90,12 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             CalendarPlan::class,
             CalendarDates::class,
             Calendar::class,
-            Frequencies::class
+            Frequencies::class,
+            Shape::class
         ];
         foreach ($tables as $table) {
             $this->em->createQuery('DELETE FROM ' . $table)->execute();
-            //$this->em->createQuery('ALTER TABLE ' . $table . ' AUTO_INCREMENT = 1')->execute();
+            $this->em->createQuery('ALTER TABLE ' . $table . ' AUTO_INCREMENT = 1')->execute();
         }
     }
 

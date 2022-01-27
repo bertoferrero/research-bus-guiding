@@ -2,21 +2,52 @@
 
 namespace App\Repository\ServiceData;
 
+use Doctrine\ORM\QueryBuilder;
+use App\Entity\ServiceData\Shape;
 use App\Entity\ServiceData\ShapePoint;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
- * @method Shape|null find($id, $lockMode = null, $lockVersion = null)
- * @method Shape|null findOneBy(array $criteria, array $orderBy = null)
- * @method Shape[]    findAll()
- * @method Shape[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method ShapePoint|null find($id, $lockMode = null, $lockVersion = null)
+ * @method ShapePoint|null findOneBy(array $criteria, array $orderBy = null)
+ * @method ShapePoint[]    findAll()
+ * @method ShapePoint[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class ShapePointRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, ShapePoint::class);
+    }
+
+    protected function nearestPointsQueryBuilder(float $latitude, float $longitude, Shape $shape): QueryBuilder
+    {
+        //https://stackoverflow.com/questions/2234204/find-nearest-latitude-longitude-with-an-sql-query
+        //https://github.com/beberlei/DoctrineExtensions
+        $query = $this->createQueryBuilder('r');
+        $query->addSelect('(3959 *
+        acos(cos(radians(:latitude)) * 
+        cos(radians(r.latitude)) * 
+        cos(radians(r.longitude) - 
+        radians(:longitude)) + 
+        sin(radians(:latitude)) * 
+        sin(radians(r.latitude)))) as distance');
+        $query->andWhere('r.shape = :shape');
+        $query->orderBy('distance', ' ASC');
+        $query->setParameters(['shape'=>$shape, 'latitude' => $latitude, 'longitude' => $longitude]);
+        return $query;
+    }
+
+    public function findNearestPoint(float $latitude, float $longitude, Shape $shape): ?ShapePoint
+    {
+        $query = $this->nearestPointsQueryBuilder($latitude, $longitude, $shape);
+        $query->setMaxResults(1);
+        $result = $query->getQuery()->getOneOrNullResult();
+        if(!empty($result)){
+            return $result[0];
+        }
+        return null;
     }
 
     // /**

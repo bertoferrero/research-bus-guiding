@@ -6,6 +6,8 @@
 parameters:
     app.component.servicedatasync.static: '%env(SERVICEDATA_STATIC_SYNC)%'
     app.component.servicedatasync.vehicleposition: '%env(SERVICEDATA_VEHICLEPOSITION_SYNC)%'
+    app.component.servicedatasync.shape.middle_points_interpolation: '%env(SERVICEDATA_SHAPE_MIDDLE_POINTS_INTERPOLATION_METERS)%'
+
     app.gtfs.static.url: '%env(GTFS_STATIC_URL)%'
     app.gtfs.rt.url: '%env(GTFS_RT_URL)%'
     app.component.notifications.connector: '%env(NOTIFICATION_SERVICE)%'
