@@ -16,6 +16,7 @@ use App\Entity\ServiceData\StopTime;
 use Trafiklab\Gtfs\Model\GtfsArchive;
 use App\Entity\ServiceData\Route as GtfsRoute;
 use App\Entity\ServiceData\Shape;
+use App\Entity\ServiceData\ShapePoint;
 use App\Entity\ServiceData\ShapeRaw;
 use App\Message\ServiceData\ShapeImportingInitMessage;
 use App\Message\ServiceData\GTFSShapeImportingInitMessage;
@@ -84,7 +85,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
     protected function clearGtfsTables()
     {
         $tables = [
-            ShapePoints::class,
+            ShapePoint::class,
             StopTime::class,
             Stop::class,
             Trip::class,
@@ -97,7 +98,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         ];
         foreach ($tables as $table) {
             $this->em->createQuery('DELETE FROM ' . $table)->execute();
-            $this->em->createQuery('ALTER TABLE ' . $table . ' AUTO_INCREMENT = 1')->execute();
+            //$this->em->createQuery('ALTER TABLE ' . $table . ' AUTO_INCREMENT = 1')->execute();
         }
     }
 
