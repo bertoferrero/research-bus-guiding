@@ -37,8 +37,8 @@ class GtfsStaticShapesSynchronizer
         //Step 2 - Match stops
         $this->matchStops($shape);
 
-        dump($shape);
-        die();
+        //Finally - Generate the distance between points into each segment
+        $this->generateShapeSegmentsAndDistances($shape);
     }
 
     /**
@@ -114,6 +114,12 @@ class GtfsStaticShapesSynchronizer
         $this->em->flush();
     }
 
+    /**
+     * Matches each stop in route with its nearest shape point
+     *
+     * @param Shape $shape
+     * @return void
+     */
     protected function matchStops(Shape $shape)
     {
         //We need one trip at least
@@ -145,10 +151,10 @@ class GtfsStaticShapesSynchronizer
             $lastStopPoint = $nearestPoint;
             $this->em->persist($nearestPoint);
 
-            if($firstStop){
+            if ($firstStop) {
                 //If it is the first stop, we must "cut" and delete previous points on the route
                 $prevPoint = $nearestPoint->getPrevPoint();
-                if($prevPoint!=null){
+                if ($prevPoint != null) {
                     //Unconnect from the shape chain
                     $prevPoint->setNextPoint(null);
                     $this->em->persist($prevPoint);
@@ -165,7 +171,7 @@ class GtfsStaticShapesSynchronizer
         }
         //Now, remove all the points far away from the last stop
         $nextPoint = $lastStopPoint->getNextPoint();
-        if($nextPoint!=null){
+        if ($nextPoint != null) {
             //Disconect
             $lastStopPoint->setNextPoint(null);
             $this->em->persist($lastStopPoint);
@@ -173,11 +179,42 @@ class GtfsStaticShapesSynchronizer
             $this->em->remove($nextPoint);
         }
         $this->em->flush();
-        die();
     }
 
-    protected function precalculateDistances(Shape $shape){
-        
+    protected function generateShapeSegmentsAndDistances(Shape $shape)
+    {
+        $points = $shape->getShapePoints();
+        $currentStop = $prevShapePoint = null;
+        $hundredFlush = 100;
+        for ($x = count($points) - 1; $x >= 0; $x--) {
+            $point = $points[$x];
+            //Store the stop for this segment
+            if ($point->getStop() != null) {
+                $currentStop = $point->getStop();
+                $prevShapePoint = $point;
+            }
+            if ($currentStop != null) {
+                //Set the stop of this chain segment
+                $point->setNextStopInRoute($currentStop);
+                //Calculate the distance between this and the last point from this segment
+                $routePointsDistance = GeoHelper::vincentyGreatCircleDistance(
+                    $point->getLatitude(),
+                    $point->getLongitude(),
+                    $prevShapePoint->getLatitude(),
+                    $prevShapePoint->getLongitude()
+                ) + $prevShapePoint->getNextStopRemainingDistance();
+                $point->setNextStopRemainingDistance($routePointsDistance);
+
+                $this->em->persist($point);
+                $hundredFlush--;
+                if ($hundredFlush <= 0) {
+                    $this->em->flush();
+                    $hundredFlush = 100;
+                }
+            }
+            $prevShapePoint = $point;
+        }
+        $this->em->flush();
     }
 
 

@@ -33,9 +33,11 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         //https://github.com/trafiklab/gtfs-php-sdk
         $feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
 
-        $shape = $this->em->find(Shape::class, 1);
-        $this->bus->dispatch(new GTFSShapePointGenerateMessage($shape));
-        return;
+        /*$shapes = $this->em->getRepository(Shape::class)->findAll();
+        foreach($shapes as $shape){
+            $this->bus->dispatch(new GTFSShapePointGenerateMessage($shape));
+        }
+        return;*/
 
         //Vaciamos las tablas GTFS
         $this->clearGtfsTables();
