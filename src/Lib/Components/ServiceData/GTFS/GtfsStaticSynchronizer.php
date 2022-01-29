@@ -86,6 +86,7 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
     protected function clearGtfsTables()
     {
         $tables = [
+            ShapeRaw::class,
             ShapePoint::class,
             StopTime::class,
             Stop::class,
