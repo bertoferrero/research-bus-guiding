@@ -32,7 +32,8 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
     public function executeSync()
     {
         //https://github.com/trafiklab/gtfs-php-sdk
-        $feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
+        //$feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
+        $feedUrl = $this->params->get('app.gtfs.static.url');
 
         /*$shapes = $this->em->getRepository(Shape::class)->findAll();
         foreach($shapes as $shape){
@@ -97,7 +98,14 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             Shape::class
         ];
         foreach ($tables as $table) {
-            $this->em->createQuery('DELETE FROM ' . $table)->execute();
+            $cmd = $this->em->getClassMetadata($table);
+            $connection = $this->em->getConnection();
+            $dbPlatform = $connection->getDatabasePlatform();
+            $connection->executeQuery('SET FOREIGN_KEY_CHECKS=0');
+            $q = $dbPlatform->getTruncateTableSql($cmd->getTableName());
+            $connection->executeStatement($q);
+            $connection->executeQuery('SET FOREIGN_KEY_CHECKS=1');
+            //$this->em->createQuery('DELETE FROM ' . $table)->execute();
             //$this->em->createQuery('ALTER TABLE ' . $table . ' AUTO_INCREMENT = 1')->execute();
         }
     }
