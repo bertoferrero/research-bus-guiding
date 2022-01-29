@@ -405,13 +405,29 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 
     protected function createTripMd5StopSequence()
     {
-        $queryBuilder = $this->em->createQueryBuilder();
-        $queryBuilder->update(Trip::class, 't');
-        $queryBuilder->set('t.md5StopSequence', '(SELECT MD5(CONCAT(trip.schemaRouteId,\'-\',group_concat(stopt.schemaStopId),\'-\',group_concat(stopt.stopSequence))) FROM ' . Trip::class . ' as trip
+        //First get all the trips
+        $trips = $this->em->getRepository(Trip::class)->findAll();
+        $hundredFlush = 100;
+        $query = 'SELECT MD5(CONCAT(trip.schemaRouteId,\'-\',group_concat(stopt.schemaStopId),\'-\',group_concat(stopt.stopSequence))) FROM ' . Trip::class . ' as trip
         INNER JOIN trip.stopTimes stopt 
-        WHERE trip = t
-        group by trip)');
-        $queryBuilder->getQuery()->execute();
+        WHERE trip = :trip
+        group by trip';
+        foreach ($trips as $trip) {
+            $dql = $this->em->createQuery($query)->setParameter(':trip', $trip);
+            $md5 = $dql->getSingleColumnResult();
+            $trip->setMd5StopSequence($md5[0]);
+            $this->em->persist($trip);
+            $hundredFlush--;
+            if ($hundredFlush <= 0) {
+                $hundredFlush = 100;
+                $this->em->flush();
+            }
+            $trip = null;
+            $md5 = null;
+        }
+        $trips = null;
+        $this->em->flush();
+        $this->em->clear();
     }
 
     protected function createPrecalculatedShapes()
