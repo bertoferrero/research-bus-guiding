@@ -190,6 +190,11 @@ class GtfsStaticShapesSynchronizer
             $point = $points[$x];
             //Store the stop for this segment
             if ($point->getStop() != null) {
+                if($currentStop != null){
+                    $this->em->flush();
+                    $updateQuery = $this->em->createQueryBuilder()->update(ShapePoint::class, 'r')->set('r.prevStopInRoute', $point->getStop()->getId())->andWhere('r.nextStopInRoute = :stop')->andWhere('r.shape = :shape')->andWhere('r.prevStopInRoute IS NULL')->setParameter('stop', $currentStop)->setParameter('shape', $shape);
+                    $updateQuery->getQuery()->execute();
+                }
                 $currentStop = $point->getStop();
                 $prevShapePoint = $point;
             }

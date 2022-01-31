@@ -7,6 +7,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=ShapePointRepository::class)
+ * @ORM\Table(indexes={
+ *     @ORM\Index(name="prev_stop_in_route_idx", columns={"prev_stop_in_route_id"})
+ * })
  */
 class ShapePoint
 {
@@ -48,6 +51,11 @@ class ShapePoint
      * @ORM\ManyToOne(targetEntity=Stop::class)
      */
     private $nextStopInRoute;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Stop::class)
+     */
+    private $prevStopInRoute;
 
     /**
      * @ORM\Column(type="float")
@@ -150,6 +158,18 @@ class ShapePoint
     public function setNextStopInRoute(?Stop $nextStopInRoute): self
     {
         $this->nextStopInRoute = $nextStopInRoute;
+
+        return $this;
+    }
+
+    public function getPrevStopInRoute(): ?Stop
+    {
+        return $this->prevStopInRoute;
+    }
+
+    public function setPrevStopInRoute(?Stop $prevStopInRoute): self
+    {
+        $this->prevStopInRoute = $prevStopInRoute;
 
         return $this;
     }

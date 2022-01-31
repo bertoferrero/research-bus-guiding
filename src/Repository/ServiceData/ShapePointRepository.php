@@ -21,7 +21,7 @@ class ShapePointRepository extends ServiceEntityRepository
         parent::__construct($registry, ShapePoint::class);
     }
 
-    protected function nearestPointsQueryBuilder(float $latitude, float $longitude, Shape $shape): QueryBuilder
+    protected function nearestPointsQueryBuilder(float $latitude, float $longitude, Shape $shape, array $previousStopsForPoints = []): QueryBuilder
     {
         //https://stackoverflow.com/questions/2234204/find-nearest-latitude-longitude-with-an-sql-query
         //https://github.com/beberlei/DoctrineExtensions
@@ -36,12 +36,15 @@ class ShapePointRepository extends ServiceEntityRepository
         $query->andWhere('r.shape = :shape');
         $query->orderBy('distance', ' ASC');
         $query->setParameters(['shape'=>$shape, 'latitude' => $latitude, 'longitude' => $longitude]);
+        if (!empty($previousStopsForPoints)) {
+            $query->andWhere('r.prevStopInRoute IN (:previousStops)')->setParameter('previousStops', $previousStopsForPoints);
+        }
         return $query;
     }
 
-    public function findNearestPoint(float $latitude, float $longitude, Shape $shape): ?ShapePoint
+    public function findNearestPoint(float $latitude, float $longitude, Shape $shape, array $previousStopsForPoints = []): ?ShapePoint
     {
-        $query = $this->nearestPointsQueryBuilder($latitude, $longitude, $shape);
+        $query = $this->nearestPointsQueryBuilder($latitude, $longitude, $shape, $previousStopsForPoints);
         $query->setMaxResults(1);
         $result = $query->getQuery()->getOneOrNullResult();
         if(!empty($result)){
