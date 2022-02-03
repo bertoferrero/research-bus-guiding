@@ -17,13 +17,13 @@ class NotificationMessageFactory
 
     public function composeVehiclePositionMessage(VehiclePosition $vehiclePosition): VehiclePositionMessage
     {
-        $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $vehiclePosition->getschemaTripId()]);
+        $routeSchemaId = $vehiclePosition->getSchemaRouteId();
         $message = new VehiclePositionMessage();
         $message->setVehicleId($vehiclePosition->getschemaVehicleId());
         $message->setStatus($vehiclePosition->getCurrentStatus());
         $message->setStopId($vehiclePosition->getschemaStopId());
-        if($trip!=null){
-            $message->setLineId($trip->getRoute()->getSchemaId());
+        if(!empty($routeSchemaId)){
+            $message->setLineId($routeSchemaId);
         }
 
         return $message;
@@ -31,13 +31,13 @@ class NotificationMessageFactory
 
     public function composeStopRequestMessage(VehiclePosition $vehiclePosition): StopRequestMessage
     {
-        $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $vehiclePosition->getschemaTripId()]);
+        $routeSchemaId = $vehiclePosition->getSchemaRouteId();
         $message = new StopRequestMessage();
         $message->setVehicleId($vehiclePosition->getschemaVehicleId());
         $message->setStatus($vehiclePosition->getCurrentStatus());
         $message->setStopId($vehiclePosition->getschemaStopId());
-        if($trip!=null){
-            $message->setLineId($trip->getRoute()->getSchemaId());
+        if(!empty($routeSchemaId)){
+            $message->setLineId($routeSchemaId);
         }
 
         return $message;

@@ -34,8 +34,7 @@ class VehicleStopNotificator
         $lineId = null;
 
         //Get vehicle line
-        $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $entity->getschemaTripId()]);
-        $lineId = $trip?->getRoute()?->getSchemaId();
+        $lineId = $entity->getRoute()?->getSchemaId();
 
         //Search for requested stops
         $stops = $this->em->getRepository(StopRequest::class)->findPending($stopId, $vehicleId, $lineId);

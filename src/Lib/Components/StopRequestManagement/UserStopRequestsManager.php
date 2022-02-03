@@ -57,11 +57,7 @@ class UserStopRequestsManager
                 throw new InvalidArgumentException("Vehicle does not exist", 2);
             }
             //Check if vehicle achieves the stop
-            $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $vehicle->getschemaTripId()]);
-            if($trip == null){
-                throw new InvalidArgumentException("Internal error, Vehicle has not a trip", 3);
-            }
-            $vehicleLine = $trip->getRoute();
+            $vehicleLine = $vehicle->getRoute();
             if(!$this->em->getRepository(Route::class)->checkRouteAndStop($vehicleLine, $stop)){
                 throw new InvalidArgumentException("Vehicle does not achieve the stop", 5);
             }

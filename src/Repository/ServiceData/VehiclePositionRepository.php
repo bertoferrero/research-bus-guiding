@@ -17,7 +17,7 @@ class VehiclePositionRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, VehiclePosition::class);
-    }
+    }  
 
     // /**
     //  * @return VehiclePosition[] Returns an array of VehiclePosition objects

@@ -2,7 +2,7 @@
 
 namespace App\Lib\Components\ServiceData\GTFS;
 
-
+use App\Entity\ServiceData\Route;
 use App\Entity\User;
 use Google\Transit\Realtime\FeedMessage;
 use App\Entity\ServiceData\VehiclePosition;
@@ -12,8 +12,12 @@ use App\Lib\Components\ServiceData\AbstractServiceDataSynchronizer;
 
 class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
 {
-    public function executeSync()
+    public function executeSync(): void
     {
+        $locationMode = (int)$this->params->get('app.component.servicedatasync.vehicle_location_mode');
+        if ($locationMode == 2) {
+            return;
+        }
 
         //https://github.com/trafiklab/gtfs-php-sdk
         $feedUrl = $this->params->get('app.gtfs.rt.url');
@@ -28,20 +32,52 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
         $userRepo = $this->em->getRepository(User::class);
         $workingVehicles = [];
         foreach ($entities as $entity) {
-            //Recogemos el vehicle y procesamos la entidad
+            //Comprobamos que tenemos todo
+            if ($entity->getVehicle() == null) {
+                //TODO error
+            }
             $vehicle = $entity->getVehicle();
+            if ($vehicle->getVehicle() == null) {
+                //TODO error
+            }
+            if ($vehicle->getTrip() == null || (empty($vehicle->getTrip()->getTripId()) && empty($vehicle->getTrip()->getRouteId()))) {
+                //TODO error
+            }
+            if ($locationMode == 0 && empty($vehicle->getStopId())) {
+                //TODO error
+            }
+            //Recogemos el vehicle y procesamos la entidad
             $vehicleId = $vehicle->getVehicle()->getId();
             $vehicleEntity = $vehiclePositionRepo->findOneBy(['schemaVehicleId' => $vehicleId]);
             if ($vehicleEntity == null) {
                 $vehicleEntity = new VehiclePosition();
                 $vehicleEntity->setschemaVehicleId($vehicleId);
             }
+            //GPS data
             $vehicleEntity->setLatitude((float)$vehicle->getPosition()->getLatitude());
             $vehicleEntity->setLongitude((float)$vehicle->getPosition()->getLongitude());
-            $vehicleEntity->setschemaTripId($vehicle->getTrip()->getTripId());
-            $vehicleEntity->setschemaStopId($vehicle->getStopId());
-            $vehicleEntity->setCurrentStatus($this->transformCurrentStatus($vehicle->getCurrentStatus()));
-            
+            //Trip or route information
+            if (!empty($vehicle->getTrip()->getTripId())) {
+                $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $vehicle->getTrip()->getTripId()]);
+                if($trip == null){
+                    //TODO error
+                }
+                $vehicleEntity->setRoute(null);
+                $vehicleEntity->setTrip($trip);
+            } else {
+                $route = $this->em->getRepository(Route::class)->findOneBy(['schemaId' => $vehicle->getTrip()->getRouteId()]);
+                if($route == null){
+                    //TODO error
+                }
+                $vehicleEntity->setTrip(null);
+                $vehicleEntity->setRoute($route);
+            }
+            //Vehicle location status (next stop and status)
+            if ($locationMode == 0) {
+                $vehicleEntity->setschemaStopId($vehicle->getStopId());
+                $vehicleEntity->setCurrentStatus($this->transformCurrentStatus($vehicle->getCurrentStatus()));
+            }
+
             $driver = $userRepo->findOneBy(['driverVehicleId' => $vehicleId]);
             $vehicleEntity->setDriver($driver);
 

@@ -30,12 +30,12 @@ class TopicResolver
         $topics[] = $this->composeTopic(['vehicle', 0, $vehiclePosition->getCurrentStatus(), 0]);
 
         //Line
-        $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $vehiclePosition->getschemaTripId()]);
-        if ($trip != null) {
-            $topics[] = $this->composeTopic(['line', $trip->getRoute()->getSchemaId(), $vehiclePosition->getCurrentStatus(), $vehiclePosition->getschemaStopId()]);
-            $topics[] = $this->composeTopic(['line', $trip->getRoute()->getSchemaId(), $vehiclePosition->getCurrentStatus(), 0]);
+        $routeSchemaId = $vehiclePosition->getSchemaRouteId();
+        if ($routeSchemaId != null) {
+            $topics[] = $this->composeTopic(['line', $routeSchemaId, $vehiclePosition->getCurrentStatus(), $vehiclePosition->getschemaStopId()]);
+            $topics[] = $this->composeTopic(['line', $routeSchemaId, $vehiclePosition->getCurrentStatus(), 0]);
         } else {
-            $this->logger->error("TopicResolver - No se localiza Trip para el id indicado: " . $vehiclePosition->getschemaTripId(), [$vehiclePosition]);
+            $this->logger->error("TopicResolver - El vehiculo no tiene route id: ", [$vehiclePosition]);
         }
         $topics[] = $this->composeTopic(['line', 0, $vehiclePosition->getCurrentStatus(), $vehiclePosition->getschemaStopId()]);
         $topics[] = $this->composeTopic(['line', 0, $vehiclePosition->getCurrentStatus(), 0]);

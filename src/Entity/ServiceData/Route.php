@@ -42,6 +42,11 @@ class Route
      */
     private $trips;
 
+    /**
+     * @ORM\OneToMany(targetEntity=VehiclePosition::class, mappedBy="route")
+     */
+    private $vehiclePositions;
+
     public function __toString()
     {
         return $this->schemaId;
@@ -50,6 +55,7 @@ class Route
     public function __construct()
     {
         $this->trips = new ArrayCollection();
+        $this->vehiclePositions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -117,6 +123,36 @@ class Route
             // set the owning side to null (unless already changed)
             if ($trip->getRoute() === $this) {
                 $trip->setRoute(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|VehiclePosition[]
+     */
+    public function getVehiclePositions(): Collection
+    {
+        return $this->vehiclePositions;
+    }
+
+    public function addVehiclePosition(VehiclePosition $vehiclePosition): self
+    {
+        if (!$this->vehiclePositions->contains($vehiclePosition)) {
+            $this->vehiclePositions[] = $vehiclePosition;
+            $vehiclePosition->setRoute($this);
+        }
+
+        return $this;
+    }
+
+    public function removeVehiclePosition(VehiclePosition $vehiclePosition): self
+    {
+        if ($this->vehiclePositions->removeElement($vehiclePosition)) {
+            // set the owning side to null (unless already changed)
+            if ($vehiclePosition->getRoute() === $this) {
+                $vehiclePosition->setRoute(null);
             }
         }
 
