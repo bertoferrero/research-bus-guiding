@@ -1,4 +1,5 @@
 <?php
+
 namespace App\EventListener;
 
 
@@ -17,7 +18,6 @@ class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
 
     public function __construct(protected NotificationManager $notificationManager)
     {
-        
     }
 
     public function getSubscribedEvents(): array
@@ -40,8 +40,10 @@ class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if (!isset(static::$entitiesToNotify[$entity->getId()])) {
-            static::$entitiesToNotify[$entity->getId()] = $entity;
+        if ($entity->getCurrentStatus() != null && $entity->getschemaStopId() != null) {
+            if (!isset(static::$entitiesToNotify[$entity->getId()])) {
+                static::$entitiesToNotify[$entity->getId()] = $entity;
+            }
         }
     }
 
@@ -51,9 +53,11 @@ class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
         if (!$entity instanceof VehiclePosition) {
             return;
         }
-        //Persist is the creation process, there is no changes on fields because all fields are just created
-        if (!isset(static::$entitiesToNotify[$entity->getId()])) {
-            static::$entitiesToNotify[$entity->getId()] = $entity;
+        if ($entity->getCurrentStatus() != null && $entity->getschemaStopId() != null) {
+            //Persist is the creation process, there is no changes on fields because all fields are just created
+            if (!isset(static::$entitiesToNotify[$entity->getId()])) {
+                static::$entitiesToNotify[$entity->getId()] = $entity;
+            }
         }
     }
 

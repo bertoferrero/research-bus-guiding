@@ -93,7 +93,7 @@ class VehiclePosition
     private $dateUpd;
 
     /**
-     * @ORM\ManyToOne(targetEntity=trip::class)
+     * @ORM\ManyToOne(targetEntity=Trip::class)
      */
     private $trip;
 

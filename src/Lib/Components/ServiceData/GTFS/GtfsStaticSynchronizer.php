@@ -29,7 +29,7 @@ use Trafiklab\Gtfs\Model\Entities\Frequency;
 class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 {
 
-    public function executeSync()
+    public function executeSync():void
     {
         //https://github.com/trafiklab/gtfs-php-sdk
         //$feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');

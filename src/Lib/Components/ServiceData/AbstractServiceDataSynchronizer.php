@@ -14,6 +14,6 @@ abstract class AbstractServiceDataSynchronizer{
         
     }
 
-    abstract function executeSync();
+    abstract function executeSync():void;
 
 }

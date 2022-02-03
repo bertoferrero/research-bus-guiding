@@ -4,6 +4,10 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
+    app.component.servicedatasync.timezone: '%env(SERVICEDATA_TIMEZONE)%'
+
+    app.component.servicedatasync.vehicle_location_mode: '%env(SERVICEDATA_VEHICLE_LOCATION_MODE)%'
+
     app.component.servicedatasync.static: '%env(SERVICEDATA_STATIC_SYNC)%'
     app.component.servicedatasync.vehicleposition: '%env(SERVICEDATA_VEHICLEPOSITION_SYNC)%'
     app.component.servicedatasync.shape.middle_points_interpolation: '%env(SERVICEDATA_SHAPE_MIDDLE_POINTS_INTERPOLATION_METERS)%'
@@ -49,5 +53,9 @@ services:
             -name: 'doctrine.event_subscriber'
 
     App\EventListener\StopRequestVehiclePositionSubscriber:
+        tags:
+            -name: 'doctrine.event_subscriber'
+
+    App\EventListener\VehicleInternalStatusDetectorSuscriber:
         tags:
             -name: 'doctrine.event_subscriber'

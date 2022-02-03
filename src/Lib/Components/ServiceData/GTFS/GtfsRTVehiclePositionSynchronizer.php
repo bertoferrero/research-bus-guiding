@@ -2,8 +2,10 @@
 
 namespace App\Lib\Components\ServiceData\GTFS;
 
-use App\Entity\ServiceData\Route;
 use App\Entity\User;
+use App\Entity\ServiceData\Trip;
+use App\Entity\ServiceData\Route;
+use App\Entity\ServiceData\Stop;
 use Google\Transit\Realtime\FeedMessage;
 use App\Entity\ServiceData\VehiclePosition;
 use App\Lib\Enum\VehiclePositionStatusEnum;
@@ -74,7 +76,11 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
             }
             //Vehicle location status (next stop and status)
             if ($locationMode == 0) {
-                $vehicleEntity->setschemaStopId($vehicle->getStopId());
+                $stop = $this->em->getRepository(Stop::class)->findOneBy(['schemaId' => $vehicle->getStopId()]);
+                if($stop == null){
+                    //TODO error
+                }
+                $vehicleEntity->setNextStop($stop);
                 $vehicleEntity->setCurrentStatus($this->transformCurrentStatus($vehicle->getCurrentStatus()));
             }
 
