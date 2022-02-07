@@ -17,7 +17,7 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
     public function executeSync(): void
     {
         $locationMode = (int)$this->params->get('app.component.servicedatasync.vehicle_location_mode');
-        if ($locationMode == 2) { //Mode 2 menas ignore all data from GTFS-RT
+        if ($locationMode == 2) { //Mode 2 means ignore all data from GTFS-RT
             return;
         }
 

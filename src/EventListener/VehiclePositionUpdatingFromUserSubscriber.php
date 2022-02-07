@@ -43,7 +43,7 @@ class VehiclePositionUpdatingFromUserSubscriber implements EventSubscriberInterf
         }
         //Filter 3, only locationmode 2
         $locationMode = (int)$this->params->get('app.component.servicedatasync.vehicle_location_mode');
-        if ($locationMode != 2) {
+        if ($locationMode < 2) {
             return;
         }
 
