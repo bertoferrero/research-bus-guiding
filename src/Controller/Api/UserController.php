@@ -66,6 +66,7 @@ class UserController extends AbstractController
                 $vehiclePosition = $vehiclePositionRepo->findOneBy(['schemaVehicleId' => $vehicleId]);
                 $user->setVehiclePosition($vehiclePosition);
                 $em->persist($user);
+                $returnData['vehicle_id'] = $user->getDriverVehicleId();
             }
 
             if(isset($data['route_id'])){
@@ -76,6 +77,7 @@ class UserController extends AbstractController
                 }
                 $user->setDriverRoute($route);
                 $em->persist($user);
+                $returnData['route_id'] = $user->getDriverRoute()?->getId();
             }
 
             if(isset($data['lat']) && isset($data['lon'])){
@@ -84,6 +86,8 @@ class UserController extends AbstractController
                 $user->setDriverLatitude($latitude);
                 $user->setDriverLongitude($longitude);
                 $em->persist($user);
+                $returnData['lat'] = $user->getDriverLatitude();
+                $returnData['lon'] = $user->getDriverLongitude();
             }
         }
 

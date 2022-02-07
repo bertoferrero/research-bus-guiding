@@ -3,11 +3,12 @@
 namespace App\EventListener;
 
 
+use App\Entity\User;
 use Doctrine\ORM\Events;
+use Doctrine\ORM\Event\LifecycleEventArgs;
+use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use App\Entity\ServiceData\VehiclePosition;
-use App\Entity\User;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use App\Lib\Components\ServiceData\VehicleStatusDetector;
 use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -15,6 +16,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 class VehiclePositionUpdatingFromUserSubscriber implements EventSubscriberInterface
 {
 
+    private static array $entitiesToProcess = [];
 
     public function __construct(protected ParameterBagInterface $params)
     {
@@ -24,6 +26,7 @@ class VehiclePositionUpdatingFromUserSubscriber implements EventSubscriberInterf
     {
         return [
             Events::preUpdate,
+            Events::postFlush,
         ];
     }
 
@@ -44,33 +47,50 @@ class VehiclePositionUpdatingFromUserSubscriber implements EventSubscriberInterf
             return;
         }
 
-        $em = $args->getEntityManager();
+        //
         //Check if all required components are not empty
         $latitude = $entity->getDriverLatitude();
         $longitude = $entity->getDriverLongitude();
         $route = $entity->getDriverRoute();
-        if($latitude == null || $longitude == null || $route == null){
+        if ($latitude == null || $longitude == null || $route == null) {
             return;
         }
+        static::$entitiesToProcess[$entity->getId()] = $entity;
+    }
 
-        //Retrieve vehiclePosition entity
-        $vehiclePosition = $entity->getVehiclePosition();
-        if($vehiclePosition==null){
-            $vehicleId = $entity->getDriverVehicleId();
-            if($vehicleId == null){
-                return;
+    public function postFlush(PostFlushEventArgs $args)
+    {
+        //Block loop callbacks
+        if (count(static::$entitiesToProcess) > 0) {
+            $entitiesToProcess = static::$entitiesToProcess;
+            static::$entitiesToProcess = [];
+            $em = $args->getEntityManager();
+            foreach ($entitiesToProcess as $entity) {
+                $latitude = $entity->getDriverLatitude();
+                $longitude = $entity->getDriverLongitude();
+                $route = $entity->getDriverRoute();
+
+                //Retrieve vehiclePosition entity
+                $vehiclePosition = $entity->getVehiclePosition();
+                if ($vehiclePosition == null) {
+                    $vehicleId = $entity->getDriverVehicleId();
+                    if ($vehicleId == null) {
+                        return;
+                    }
+                    $vehiclePosition = $em->getRepository(VehiclePosition::class)->findOneBy(['schemaVehicleId' => $vehicleId]);
+                    if ($vehiclePosition == null) {
+                        $vehiclePosition = new VehiclePosition();
+                        $vehiclePosition->setschemaVehicleId($vehicleId);
+                    }
+                }
+
+                //Set data and persist
+                $vehiclePosition->setLatitude($latitude);
+                $vehiclePosition->setLongitude($longitude);
+                $vehiclePosition->setRoute($route);
+                $em->persist($vehiclePosition); //FIXME esto no funcionará aquí, utilizar onflush
             }
-            $vehiclePosition = $em->getRepository(VehiclePosition::class)->findOneBy(['schemaVehicleId' => $vehicleId]);
-            if ($vehiclePosition == null) {
-                $vehiclePosition = new VehiclePosition();
-                $vehiclePosition->setschemaVehicleId($vehicleId);
-            }
+            $em->flush();
         }
-
-        //Set data and persist
-        $vehiclePosition->setLatitude($latitude);
-        $vehiclePosition->setLongitude($longitude);
-        $vehiclePosition->setRoute($route);
-        $em->persist($vehiclePosition); //FIXME esto no funcionará aquí, utilizar onflush
     }
 }

@@ -59,3 +59,7 @@ services:
     App\EventListener\VehicleInternalStatusDetectorSuscriber:
         tags:
             -name: 'doctrine.event_subscriber'
+
+    App\EventListener\VehiclePositionUpdatingFromUserSubscriber:
+        tags:
+            -name: 'doctrine.event_subscriber'
