@@ -82,11 +82,11 @@ class VehicleStatusDetector
         $shapePointRepo = $this->em->getRepository(ShapePoint::class);
         //If there are related stops, first, try to find the nearestpoint filtering by these shape sections
         if (count($vehicleRelatedStops)) {
-            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $this->shapeMiddlePointsInterpolation, $trips, $vehicleRelatedStops);
+            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), /*$this->shapeMiddlePointsInterpolation*2*/0, $trips, $vehicleRelatedStops);
         }
         //If finally the nearestpoint cannot be found, lets search on the whole shape
         if ($nearestPoint == null) {
-            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $this->shapeMiddlePointsInterpolation, $trips);
+            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), /*$this->shapeMiddlePointsInterpolation*2*/0, $trips);
         }
         return $nearestPoint;
     }

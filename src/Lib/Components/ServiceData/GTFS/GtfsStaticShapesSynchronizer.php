@@ -142,7 +142,7 @@ class GtfsStaticShapesSynchronizer
             }
             $processedStops[] = $busStop->getId();
             //From the stop we get the nearest point
-            $nearestPoint = $shapePointRepo->findNearestPoint($busStop->getLatitude(), $busStop->getLongitude(), $this->shapeMiddlePointsInterpolation, $shape);
+            $nearestPoint = $shapePointRepo->findNearestPoint($busStop->getLatitude(), $busStop->getLongitude(), $shape);
             //If it exists, we associate it with the stop
             if (empty($nearestPoint)) {
                 throw new \Exception("Empty point for stop :" . $busStop->getId() . " and shape :" . $shape->getId());

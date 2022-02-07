@@ -24,7 +24,7 @@ class ShapePointRepository extends ServiceEntityRepository
         parent::__construct($registry, ShapePoint::class);
     }
 
-    protected function nearestPointsQueryBuilder(float $latitude, float $longitude, float $distanceLimit, array $previousStopsForPoints = []): QueryBuilder
+    protected function nearestPointsQueryBuilder(float $latitude, float $longitude, float $distanceLimit = 0, array $previousStopsForPoints = []): QueryBuilder
     {
         //https://stackoverflow.com/questions/2234204/find-nearest-latitude-longitude-with-an-sql-query
         //https://github.com/beberlei/DoctrineExtensions
@@ -41,7 +41,9 @@ class ShapePointRepository extends ServiceEntityRepository
         if (!empty($previousStopsForPoints)) {
             $query->andWhere('r.prevStopInRoute IN (:previousStops)')->setParameter('previousStops', $previousStopsForPoints);
         }
-        $query->having('distance <= :distanceLimit')->setParameter('distanceLimit', $distanceLimit);
+        if ($distanceLimit > 0) {
+            $query->having('distance <= :distanceLimit')->setParameter('distanceLimit', $distanceLimit);
+        }
         return $query;
     }
 
@@ -54,7 +56,7 @@ class ShapePointRepository extends ServiceEntityRepository
      * @param array $previousStopsForPoints
      * @return ShapePoint|null
      */
-    public function findNearestPoint(float $latitude, float $longitude, float $distanceLimit, Shape $shape, array $previousStopsForPoints = []): ?ShapePoint
+    public function findNearestPoint(float $latitude, float $longitude, Shape $shape, float $distanceLimit = 0, array $previousStopsForPoints = []): ?ShapePoint
     {
         $query = $this->nearestPointsQueryBuilder($latitude, $longitude, $distanceLimit, $previousStopsForPoints);
         $query->andWhere('r.shape = :shape')->setParameter('shape', $shape);
@@ -78,8 +80,8 @@ class ShapePointRepository extends ServiceEntityRepository
     public function findNearestPointFromTripSet(float $latitude, float $longitude, float $distanceLimit, array $trips, array $previousStopsForPoints = []): ?ShapePoint
     {
         $query = $this->nearestPointsQueryBuilder($latitude, $longitude, $distanceLimit, $previousStopsForPoints);
-        $query->innerJoin('r.shape','shape');
-        $query->innerJoin('shape.trips','trip',Join::WITH, 'trip IN (:trips)')->setParameter('trips', $trips);
+        $query->innerJoin('r.shape', 'shape');
+        $query->innerJoin('shape.trips', 'trip', Join::WITH, 'trip IN (:trips)')->setParameter('trips', $trips);
         $query->setMaxResults(1);
         $result = $query->getQuery()->getOneOrNullResult();
         if (!empty($result)) {
