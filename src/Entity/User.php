@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\ServiceData\Route;
 use App\Entity\ServiceData\VehiclePosition;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -57,7 +58,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $notificationDeviceToken;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", length=128, nullable=true)
      */
     private $driverVehicleId;
 
@@ -65,6 +66,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\OneToOne(targetEntity=VehiclePosition::class, mappedBy="driver", cascade={"persist", "remove"})
      */
     private $vehiclePosition;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Route::class, inversedBy="drivers")
+     */
+    private $driverRoute;
+
+    /**
+     * @ORM\Column(type="float", nullable=true)
+     */
+    private $driverLatitude;
+
+    /**
+     * @ORM\Column(type="float", nullable=true)
+     */
+    private $driverLongitude;
 
     public function __construct()
     {
@@ -225,6 +241,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         $this->vehiclePosition = $vehiclePosition;
+
+        return $this;
+    }
+
+    public function getDriverRoute(): ?Route
+    {
+        return $this->driverRoute;
+    }
+
+    public function setDriverRoute(?Route $driverRoute): self
+    {
+        $this->driverRoute = $driverRoute;
+
+        return $this;
+    }
+
+    public function getDriverLatitude(): ?float
+    {
+        return $this->driverLatitude;
+    }
+
+    public function setDriverLatitude(?float $driverLatitude): self
+    {
+        $this->driverLatitude = $driverLatitude;
+
+        return $this;
+    }
+
+    public function getDriverLongitude(): ?float
+    {
+        return $this->driverLongitude;
+    }
+
+    public function setDriverLongitude(?float $driverLongitude): self
+    {
+        $this->driverLongitude = $driverLongitude;
 
         return $this;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\ServiceData\Route as ServiceDataRoute;
 use App\Entity\ServiceData\VehiclePosition;
 use App\Entity\User;
 use App\Entity\UserNotificationTopicSubscription;
@@ -64,6 +65,24 @@ class UserController extends AbstractController
                 $vehiclePositionRepo = $em->getRepository(VehiclePosition::class);
                 $vehiclePosition = $vehiclePositionRepo->findOneBy(['schemaVehicleId' => $vehicleId]);
                 $user->setVehiclePosition($vehiclePosition);
+                $em->persist($user);
+            }
+
+            if(isset($data['route_id'])){
+                $routeId = trim(strip_tags($data['route_id']));
+                $route = $em->getRepository(ServiceDataRoute::class)->findOneBy(['schemaId' => $routeId]);
+                if(empty($route)){
+                    return $this->json(['message' => 'route not found'], Response::HTTP_NOT_FOUND);
+                }
+                $user->setDriverRoute($route);
+                $em->persist($user);
+            }
+
+            if(isset($data['lat']) && isset($data['lon'])){
+                $latitude = (float)trim(strip_tags($data['lat']));
+                $longitude = (float)trim(strip_tags($data['lon']));
+                $user->setDriverLatitude($latitude);
+                $user->setDriverLongitude($longitude);
                 $em->persist($user);
             }
         }

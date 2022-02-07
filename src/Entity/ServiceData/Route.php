@@ -2,6 +2,7 @@
 
 namespace App\Entity\ServiceData;
 
+use App\Entity\User;
 use App\Repository\ServiceData\RouteRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -47,6 +48,11 @@ class Route
      */
     private $vehiclePositions;
 
+    /**
+     * @ORM\OneToMany(targetEntity=User::class, mappedBy="driverRoute")
+     */
+    private $drivers;
+
     public function __toString()
     {
         return $this->schemaId;
@@ -56,6 +62,7 @@ class Route
     {
         $this->trips = new ArrayCollection();
         $this->vehiclePositions = new ArrayCollection();
+        $this->drivers = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -153,6 +160,36 @@ class Route
             // set the owning side to null (unless already changed)
             if ($vehiclePosition->getRoute() === $this) {
                 $vehiclePosition->setRoute(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|User[]
+     */
+    public function getDrivers(): Collection
+    {
+        return $this->drivers;
+    }
+
+    public function addDriver(User $driver): self
+    {
+        if (!$this->drivers->contains($driver)) {
+            $this->drivers[] = $driver;
+            $driver->setDriverRoute($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDriver(User $driver): self
+    {
+        if ($this->drivers->removeElement($driver)) {
+            // set the owning side to null (unless already changed)
+            if ($driver->getDriverRoute() === $this) {
+                $driver->setDriverRoute(null);
             }
         }
 
