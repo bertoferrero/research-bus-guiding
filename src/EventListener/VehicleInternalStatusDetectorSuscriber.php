@@ -4,9 +4,10 @@ namespace App\EventListener;
 
 
 use Doctrine\ORM\Events;
+use Doctrine\ORM\Event\LifecycleEventArgs;
+use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use App\Entity\ServiceData\VehiclePosition;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use App\Lib\Components\ServiceData\VehicleStatusDetector;
 use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -14,6 +15,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 class VehicleInternalStatusDetectorSuscriber implements EventSubscriberInterface
 {
 
+    private static array $entitiesToProcess = [];
 
     public function __construct(protected ParameterBagInterface $params, protected VehicleStatusDetector $locator)
     {
@@ -24,6 +26,7 @@ class VehicleInternalStatusDetectorSuscriber implements EventSubscriberInterface
         return [
             Events::preUpdate,
             Events::prePersist,
+            Events::postFlush,
         ];
     }
 
@@ -38,13 +41,7 @@ class VehicleInternalStatusDetectorSuscriber implements EventSubscriberInterface
             return;
         }
 
-        $entity = $this->doCommonWork($entity, $args);
-        if ($entity != null) {
-            $em = $args->getEntityManager();
-            $uow = $em->getUnitOfWork();
-            $meta = $em->getClassMetadata(get_class($entity));
-            $uow->recomputeSingleEntityChangeSet($meta, $entity);
-        }
+        $entity = $this->doCommonWork($entity);
     }
 
     public function prePersist(LifecycleEventArgs $args): void
@@ -54,18 +51,30 @@ class VehicleInternalStatusDetectorSuscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->doCommonWork($entity, $args);
+        $this->doCommonWork($entity);
     }
 
-    protected function doCommonWork(VehiclePosition $entity, LifecycleEventArgs $args): ?VehiclePosition
+    protected function doCommonWork(VehiclePosition $entity): void
     {
         $locationMode = (int)$this->params->get('app.component.servicedatasync.vehicle_location_mode');
         if ($locationMode == 0) {
-            return null;
+            return;
         }
 
-        $entity = $this->locator->detectVehicleStopAndStatus($entity, false);
+        static::$entitiesToProcess[$entity->getId()] = $entity;
+    }
 
-        return $entity;
+    public function postFlush(PostFlushEventArgs $args)
+    {
+        //Block loop callbacks
+        if (count(static::$entitiesToProcess) > 0) {
+            $entitiesToProcess = static::$entitiesToProcess;
+            static::$entitiesToProcess = [];
+            $em = $args->getEntityManager();
+            foreach ($entitiesToProcess as $entity) {
+                $entity = $this->locator->detectVehicleStopAndStatus($entity, true);
+            }
+            $em->flush();
+        }
     }
 }
