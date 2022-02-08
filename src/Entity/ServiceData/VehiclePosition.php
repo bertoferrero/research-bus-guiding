@@ -260,6 +260,7 @@ class VehiclePosition
         $this->trip = $trip;
 
         $this->route = $this->trip?->getRoute();
+        $this->setSchemaRouteId($this->route?->getschemaId());
         $this->setschemaTripId($this->trip?->getschemaId());
 
         return $this;
@@ -275,6 +276,7 @@ class VehiclePosition
         $this->setTrip(null);
         $this->route = $route;
         $this->setSchemaRouteId($this->route?->getschemaId());
+        
 
         return $this;
     }
