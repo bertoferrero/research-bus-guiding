@@ -52,7 +52,8 @@ class VehiclePositionUpdatingFromUserSubscriber implements EventSubscriberInterf
         $latitude = $entity->getDriverLatitude();
         $longitude = $entity->getDriverLongitude();
         $route = $entity->getDriverRoute();
-        if ($latitude == null || $longitude == null || $route == null) {
+        $vehicleId = $entity->getDriverVehicleId();
+        if ($latitude == null || $longitude == null || $route == null || $vehicleId == null) {
             return;
         }
         static::$entitiesToProcess[$entity->getId()] = $entity;

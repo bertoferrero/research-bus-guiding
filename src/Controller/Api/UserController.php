@@ -60,27 +60,36 @@ class UserController extends AbstractController
             //Driver vehicle id
             if (isset($data['vehicle_id'])) {
                 $vehicleId = trim(strip_tags($data['vehicle_id']));
-                $user->setDriverVehicleId($vehicleId);
-                //Search vehiclePosition matching
-                $vehiclePositionRepo = $em->getRepository(VehiclePosition::class);
-                $vehiclePosition = $vehiclePositionRepo->findOneBy(['schemaVehicleId' => $vehicleId]);
-                $user->setVehiclePosition($vehiclePosition);
+                if (empty($vehicleId)) {
+                    $user->setVehiclePosition(null);
+                    $user->setDriverVehicleId(null);
+                } else {
+                    $user->setDriverVehicleId($vehicleId);
+                    //Search vehiclePosition matching
+                    $vehiclePositionRepo = $em->getRepository(VehiclePosition::class);
+                    $vehiclePosition = $vehiclePositionRepo->findOneBy(['schemaVehicleId' => $vehicleId]);
+                    $user->setVehiclePosition($vehiclePosition);
+                }
                 $em->persist($user);
                 $returnData['vehicle_id'] = $user->getDriverVehicleId();
             }
 
-            if(isset($data['route_id'])){
+            if (isset($data['route_id'])) {
                 $routeId = trim(strip_tags($data['route_id']));
-                $route = $em->getRepository(ServiceDataRoute::class)->findOneBy(['schemaId' => $routeId]);
-                if(empty($route)){
-                    return $this->json(['message' => 'route not found'], Response::HTTP_NOT_FOUND);
+                if (empty($routeId)) {
+                    $user->setDriverRoute(null);
+                } else {
+                    $route = $em->getRepository(ServiceDataRoute::class)->findOneBy(['schemaId' => $routeId]);
+                    if (empty($route)) {
+                        return $this->json(['message' => 'route not found'], Response::HTTP_NOT_FOUND);
+                    }
+                    $user->setDriverRoute($route);
                 }
-                $user->setDriverRoute($route);
                 $em->persist($user);
                 $returnData['route_id'] = $user->getDriverRoute()?->getId();
             }
 
-            if(isset($data['lat']) && isset($data['lon'])){
+            if (isset($data['lat']) && isset($data['lon'])) {
                 $latitude = (float)trim(strip_tags($data['lat']));
                 $longitude = (float)trim(strip_tags($data['lon']));
                 $user->setDriverLatitude($latitude);

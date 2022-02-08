@@ -231,7 +231,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setVehiclePosition(?VehiclePosition $vehiclePosition): self
     {
         // unset the owning side of the relation if necessary
-        if ($vehiclePosition === null && $this->vehiclePosition !== null) {
+        if ($this->vehiclePosition !== null && $vehiclePosition?->getId() != $this->vehiclePosition->getId()) {
             $this->vehiclePosition->setDriver(null);
         }
 
