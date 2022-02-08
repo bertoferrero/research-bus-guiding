@@ -50,16 +50,16 @@ services:
 
     App\EventListener\NotificationVehiclePositionSubscriber:
         tags:
-            -name: 'doctrine.event_subscriber'
+            - name: 'doctrine.event_subscriber'
 
     App\EventListener\StopRequestVehiclePositionSubscriber:
         tags:
-            -name: 'doctrine.event_subscriber'
+            - name: 'doctrine.event_subscriber'
 
     App\EventListener\VehicleInternalStatusDetectorSuscriber:
         tags:
-            -name: 'doctrine.event_subscriber'
+            - name: 'doctrine.event_subscriber'
 
     App\EventListener\VehiclePositionUpdatingFromUserSubscriber:
         tags:
-            -name: 'doctrine.event_subscriber'
+            - name: 'doctrine.event_subscriber'

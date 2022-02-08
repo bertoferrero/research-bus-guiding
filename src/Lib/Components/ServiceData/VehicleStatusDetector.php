@@ -12,6 +12,7 @@ use App\Entity\ServiceData\VehiclePosition;
 use App\Lib\Enum\VehiclePositionStatusEnum;
 use DateTimeZone;
 use Doctrine\ORM\Query\Expr\Join;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class VehicleStatusDetector
@@ -20,7 +21,7 @@ class VehicleStatusDetector
     protected int $incoming_meters = 250; //TODO Configuración
     protected int $stopped_meters = 20; //TODO Configuración
 
-    public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $parameters)
+    public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $parameters, protected LoggerInterface $logger)
     {
         $this->shapeMiddlePointsInterpolation = (int)$this->parameters->get('app.component.servicedatasync.shape.middle_points_interpolation');
     }
@@ -30,12 +31,13 @@ class VehicleStatusDetector
         //Step 1 - Get the nearest point
         $nearestPoint = null;
         if (($trip = $vehicle->getTrip()) != null) {
-            $nearestPoint = $this->getNearestPointFromTrips($vehicle, [$trip]);
+            $nearestPoint = $this->getNearestPointFromTrips($vehicle, [$trip], $this->shapeMiddlePointsInterpolation*2);
         }
         if ($nearestPoint == null && ($route = $vehicle->getRoute()) != null) {
             $nearestPoint = $this->getNearestPointFromRoute($vehicle, $route);
         }
         if ($nearestPoint == null) {
+            return $vehicle;
             throw new \Exception("No nearest point is detected");
         }
 
@@ -63,7 +65,7 @@ class VehicleStatusDetector
 
     #region Nearest point detection
 
-    protected function getNearestPointFromTrips(VehiclePosition $vehicle, array $trips): ?ShapePoint
+    protected function getNearestPointFromTrips(VehiclePosition $vehicle, array $trips, float $distanceLimit = 0): ?ShapePoint
     {
         if (count($trips) == 0) {
             return null;
@@ -82,11 +84,21 @@ class VehicleStatusDetector
         $shapePointRepo = $this->em->getRepository(ShapePoint::class);
         //If there are related stops, first, try to find the nearestpoint filtering by these shape sections
         if (count($vehicleRelatedStops)) {
-            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), /*$this->shapeMiddlePointsInterpolation*2*/0, $trips, $vehicleRelatedStops);
+            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $distanceLimit, $trips, $vehicleRelatedStops);
         }
         //If finally the nearestpoint cannot be found, lets search on the whole shape
         if ($nearestPoint == null) {
-            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), /*$this->shapeMiddlePointsInterpolation*2*/0, $trips);
+            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $distanceLimit, $trips);
+        }
+
+        if($nearestPoint == null){
+            $tripsLog = array_map(function($x){
+                return [$x->getId(), $x->getSchemaId()];
+            }, $trips);
+            $relatedStopsLog = array_map(function($x){
+                return [$x->getId(), $x->getSchemaId()];
+            }, $vehicleRelatedStops);
+            $this->logger->error("No nearest point is detected", [$tripsLog, $distanceLimit, $relatedStopsLog, $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
         }
         return $nearestPoint;
     }
@@ -98,7 +110,7 @@ class VehicleStatusDetector
 
         $trips = $this->em->getRepository(Trip::class)->findByRouteAndWorkingDate($route, $timeNow);
 
-        return $this->getNearestPointFromTrips($vehicle, $trips);
+        return $this->getNearestPointFromTrips($vehicle, $trips, $this->shapeMiddlePointsInterpolation*3);
     }
 
     #endregion

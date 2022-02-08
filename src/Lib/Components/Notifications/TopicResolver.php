@@ -35,7 +35,7 @@ class TopicResolver
             $topics[] = $this->composeTopic(['line', $routeSchemaId, $vehiclePosition->getCurrentStatus(), $vehiclePosition->getschemaStopId()]);
             $topics[] = $this->composeTopic(['line', $routeSchemaId, $vehiclePosition->getCurrentStatus(), 0]);
         } else {
-            $this->logger->error("TopicResolver - El vehiculo no tiene route id: ", [$vehiclePosition]);
+            $this->logger->error("TopicResolver - El vehiculo no tiene route id: ".$vehiclePosition->getId(), [$vehiclePosition]);
         }
         $topics[] = $this->composeTopic(['line', 0, $vehiclePosition->getCurrentStatus(), $vehiclePosition->getschemaStopId()]);
         $topics[] = $this->composeTopic(['line', 0, $vehiclePosition->getCurrentStatus(), 0]);
