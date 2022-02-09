@@ -31,12 +31,13 @@ class VehicleStatusDetector
         //Step 1 - Get the nearest point
         $nearestPoint = null;
         if (($trip = $vehicle->getTrip()) != null) {
-            $nearestPoint = $this->getNearestPointFromTrips($vehicle, [$trip], $this->shapeMiddlePointsInterpolation*2);
+            $nearestPoint = $this->getNearestPointFromTrips($vehicle, [$trip], $this->shapeMiddlePointsInterpolation*3);
         }
         if ($nearestPoint == null && ($route = $vehicle->getRoute()) != null) {
             $nearestPoint = $this->getNearestPointFromRoute($vehicle, $route);
         }
         if ($nearestPoint == null) {
+            $this->logger->error("No nearest point is detected AT ALL", [$vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
             return $vehicle;
             throw new \Exception("No nearest point is detected");
         }
@@ -98,7 +99,7 @@ class VehicleStatusDetector
             $relatedStopsLog = array_map(function($x){
                 return [$x->getId(), $x->getSchemaId()];
             }, $vehicleRelatedStops);
-            $this->logger->error("No nearest point is detected", [$tripsLog, $distanceLimit, $relatedStopsLog, $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
+            $this->logger->debug("No nearest point is detected", [$tripsLog, $distanceLimit, $relatedStopsLog, $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
         }
         return $nearestPoint;
     }
