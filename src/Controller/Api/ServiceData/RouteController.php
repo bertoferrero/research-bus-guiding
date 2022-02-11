@@ -36,8 +36,8 @@ class RouteController extends AbstractController
         return $this->json($linesArray);
     }
 
-    #[Route('/{schema_id}', name: 'api_route_get', methods: ['GET'])]
-    public function getAction(EntityManagerInterface $em, string $schema_id): Response
+    #[Route('/{schema_id}/stops', name: 'api_route_stops_get', methods: ['GET'])]
+    public function getStops(EntityManagerInterface $em, string $schema_id): Response
     {
         //Get the line (route)
         $route = $em->getRepository(ServiceDataRoute::class)->findOneBy(['schemaId' => $schema_id]);
@@ -66,11 +66,6 @@ class RouteController extends AbstractController
 
 
 
-        return $this->json([
-            'id' => $route->getSchemaId(),
-            'name' => $route->getName(),
-            'color' => $route->getColor(),
-            'stops' => $stopsArray
-        ]);
+        return $this->json($stopsArray);
     }
 }
