@@ -63,6 +63,7 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
                 $trip = $this->em->getRepository(Trip::class)->findOneBy(['schemaId' => $vehicle->getTrip()->getTripId()]);
                 if($trip == null){
                     //TODO error
+                    $this->logger->error("GtfsRTVehiclePositionSynchronizer Trip not found for id: ".$vehicle->getTrip()->getTripId());
                 }
                 $vehicleEntity->setRoute(null);
                 $vehicleEntity->setTrip($trip);
@@ -70,6 +71,7 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
                 $route = $this->em->getRepository(Route::class)->findOneBy(['schemaId' => $vehicle->getTrip()->getRouteId()]);
                 if($route == null){
                     //TODO error
+                    $this->logger->error("GtfsRTVehiclePositionSynchronizer Route not found for id: ".$vehicle->getTrip()->getRouteId());
                 }
                 $vehicleEntity->setTrip(null);
                 $vehicleEntity->setRoute($route);
@@ -79,6 +81,7 @@ class GtfsRTVehiclePositionSynchronizer extends AbstractServiceDataSynchronizer
                 $stop = $this->em->getRepository(Stop::class)->findOneBy(['schemaId' => $vehicle->getStopId()]);
                 if($stop == null){
                     //TODO error
+                    $this->logger->error("GtfsRTVehiclePositionSynchronizer Stop not found for id: ".$vehicle->getStopId());
                 }
                 $vehicleEntity->setNextStop($stop);
                 $vehicleEntity->setCurrentStatus($this->transformCurrentStatus($vehicle->getCurrentStatus()));
