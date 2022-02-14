@@ -33,6 +33,11 @@ class SampleLog
      */
     private $sampleServerDateTime;
 
+    /**
+     * @ORM\Column(type="text")
+     */
+    private $extraData = "";
+
     public function getId(): ?int
     {
         return $this->id;
@@ -81,5 +86,17 @@ class SampleLog
     public function setCreationValue(): void
     {
         $this->sampleServerDateTime = new \DateTimeImmutable();
+    }
+
+    public function getExtraData(): ?string
+    {
+        return $this->extraData;
+    }
+
+    public function setExtraData(string $extraData): self
+    {
+        $this->extraData = $extraData;
+
+        return $this;
     }
 }

@@ -50,6 +50,7 @@ class SampleLogController extends AbstractController
             $sampleLog = new SampleLog();
             $sampleLog->setType($sample_type);
             $sampleLog->setSampleDateTime($sampleDateTime);
+            $sampleLog->setExtraData(trim($data['extra_data'] ?? ""));
             $em->persist($sampleLog);
             $em->flush();
 
