@@ -63,3 +63,9 @@ services:
     App\EventListener\VehiclePositionUpdatingFromUserSubscriber:
         tags:
             - name: 'doctrine.event_subscriber'
+
+    App\EventListener\StopRequestCreationSubscriber:
+        tags:
+            - name: 'doctrine.event_subscriber'
+
+            

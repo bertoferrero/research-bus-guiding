@@ -33,7 +33,7 @@ class StopRequestController extends AbstractController
         if ($request != null) {
             $return = [
                 'vehicle' => $request->getSchemaVehicleId(),
-                'line' => $request->getSchemaLineId(),
+                'route' => $request->getSchemaRouteId(),
                 'stop' => $request->getSchemaStopId(),
                 'requestdate' => $request->getDateAdd()
             ];
@@ -58,12 +58,12 @@ class StopRequestController extends AbstractController
             }
 
             //Check the data
-            if (!isset($data['stop_id']) || (!isset($data['vehicle_id']) && !isset($data['line_id']))) {
+            if (!isset($data['stop_id']) || (!isset($data['vehicle_id']) && !isset($data['route_id']))) {
                 throw new NotFoundHttpException('Excpecting mandatory parameters!');
             }
 
             //Set Data
-            $userStopRequestsManager->setUserRequest($user, (int)$data['stop_id'], $data['vehicle_id'] ?? null, $data['line_id'] ?? null, $this->isGranted('ROLE_DEV'));
+            $userStopRequestsManager->setUserRequest($user, (int)$data['stop_id'], $data['vehicle_id'] ?? null, $data['route_id'] ?? null, $this->isGranted('ROLE_DEV'));
 
             //return the same get action result
             return $this->getAction($user, $userStopRequestsManager);

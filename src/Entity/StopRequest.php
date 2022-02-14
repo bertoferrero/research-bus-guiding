@@ -13,7 +13,8 @@ use Gedmo\Mapping\Annotation as Gedmo;
  * @ORM\Table(indexes={
  *     @ORM\Index(name="status_idx", columns={"status"}),
  *     @ORM\Index(name="vehicle_id_idx", columns={"schema_vehicle_id"}),
- *     @ORM\Index(name="line_id_idx", columns={"schema_line_id"}),
+ *     @ORM\Index(name="route_id_idx", columns={"schema_route_id"}),
+ *     @ORM\Index(name="stop_id_idx", columns={"schema_stop_id"}),
  * })
  * @ORM\HasLifecycleCallbacks()
  */
@@ -34,10 +35,10 @@ class StopRequest
     /**
      * @ORM\Column(type="string", length=128, nullable=true)
      */
-    private $schemaLineId;
+    private $schemaRouteId;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="string", length=128)
      */
     private $schemaStopId;
 
@@ -85,24 +86,24 @@ class StopRequest
         return $this;
     }
 
-    public function getSchemaLineId(): ?string
+    public function getSchemaRouteId(): ?string
     {
-        return $this->schemaLineId;
+        return $this->schemaRouteId;
     }
 
-    public function setSchemaLineId(?string $schemaLineId): self
+    public function setSchemaRouteId(?string $schemaRouteId): self
     {
-        $this->schemaLineId = $schemaLineId;
+        $this->schemaRouteId = $schemaRouteId;
 
         return $this;
     }
 
-    public function getSchemaStopId(): ?int
+    public function getSchemaStopId(): ?string
     {
         return $this->schemaStopId;
     }
 
-    public function setSchemaStopId(int $schemaStopId): self
+    public function setSchemaStopId(string $schemaStopId): self
     {
         $this->schemaStopId = $schemaStopId;
 

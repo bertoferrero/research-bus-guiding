@@ -24,9 +24,9 @@ class VehicleStopNotificator
         }
 
         $status = $entity->getCurrentStatus();
-        /*if ($status != VehiclePositionStatusEnum::IN_TRANSIT_TO) {
+        if ($status == VehiclePositionStatusEnum::STOPPED_AT) {
             return;
-        }*/
+        }
         $this->userStopRequestsManager->invalidateOldRequests();
 
         $stopId = $entity->getschemaStopId();
@@ -51,5 +51,31 @@ class VehicleStopNotificator
 
         //Send the notification 
         $this->notificationManager->sendStopNotification($entity);
+    }
+
+    /**
+     * Checks if there is a vehicle in transit to the stop requested.
+     *
+     * @param StopRequest $entity
+     * @return void
+     */
+    public function sendNotificationFromRequestEntity(StopRequest $entity){
+        $vehicleRepo = $this->em->getRepository(VehiclePosition::class);
+        //Check if there is a vehicle which the requested stop as objective
+        if($entity->GetSchemaVehicleId()){
+            $vehicle = $vehicleRepo->findOneBy(['schemaVehicleId' => $entity->getSchemaVehicleId(), 'schemaStopId' => $entity->getSchemaStopId(), 'currentStatus' => [VehiclePositionStatusEnum::IN_TRANSIT_TO, VehiclePositionStatusEnum::INCOMING_AT]]);
+        }else{
+            $vehicle = $vehicleRepo->findOneBy(['schemaRouteId' => $entity->getSchemaRouteId(), 'schemaStopId' => $entity->getSchemaStopId(), 'currentStatus' => [VehiclePositionStatusEnum::IN_TRANSIT_TO, VehiclePositionStatusEnum::INCOMING_AT]]);
+        }
+        if($vehicle == null){
+            return;
+        }
+
+        //Set the request as completed and send the notification
+        $entity->setStatus(StopRequestStatusEnum::PROCESSED);
+        $this->em->persist($entity);
+        $this->em->flush();
+
+        $this->notificationManager->sendStopNotification($vehicle);
     }
 }

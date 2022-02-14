@@ -34,8 +34,8 @@ class StopRequestRepository extends ServiceEntityRepository
         ->andWhere('entity.schemaStopId = :stopId')->setParameter('stopId', $stopId);
         if($lineId != null){
             $query->andWhere('(entity.schemaVehicleId = :vehicleId OR entity.schemaVehicleId IS NULL)')->setParameter('vehicleId', $vehicleId);
-            $query->andWhere('(entity.schemaLineId = :lineId OR entity.schemaLineId IS NULL)')->setParameter('lineId', $lineId);
-            $query->andWhere('(entity.schemaVehicleId IS NOT NULL OR entity.schemaLineId IS NOT NULL)');
+            $query->andWhere('(entity.schemaRouteId = :lineId OR entity.schemaRouteId IS NULL)')->setParameter('lineId', $lineId);
+            $query->andWhere('(entity.schemaVehicleId IS NOT NULL OR entity.schemaRouteId IS NOT NULL)');
         }
         else{
             $query->andWhere('entity.schemaVehicleId = :vehicleId')->setParameter('vehicleId', $vehicleId);

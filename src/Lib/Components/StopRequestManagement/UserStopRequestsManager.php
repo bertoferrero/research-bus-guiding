@@ -52,10 +52,10 @@ class UserStopRequestsManager
      * @param User $user
      * @param integer $schemaStopId
      * @param string|null $schemaVehicleId
-     * @param string|null $schemaLineId
+     * @param string|null $schemaRouteId
      * @return void
      */
-    public function setUserRequest(User $user, int $schemaStopId, ?string $schemaVehicleId, ?string $schemaLineId, bool $allowMultiplePendingRequests = false)
+    public function setUserRequest(User $user, int $schemaStopId, ?string $schemaVehicleId, ?string $schemaRouteId, bool $allowMultiplePendingRequests = false)
     {
         $this->invalidateOldRequests();
         $stop = $vehicle = $vehicleLine = $line = null;
@@ -75,8 +75,8 @@ class UserStopRequestsManager
                 throw new InvalidArgumentException("Vehicle does not achieve the stop", 5);
             }
         }
-        if ($schemaLineId != null) {
-            $line = $this->em->getRepository(Route::class)->findOneBy(['schemaId' => $schemaLineId]);
+        if ($schemaRouteId != null) {
+            $line = $this->em->getRepository(Route::class)->findOneBy(['schemaId' => $schemaRouteId]);
             if ($line == null) {
                 throw new InvalidArgumentException("Line does not exist", 4);
             }
@@ -95,13 +95,13 @@ class UserStopRequestsManager
         }
 
         //IF both line and vehicle are null, there is nothing to do
-        if ($schemaLineId == null && $schemaVehicleId == null) {
+        if ($schemaRouteId == null && $schemaVehicleId == null) {
             return;
         }
 
         $stopRequest = new StopRequest();
         $stopRequest->setSchemaVehicleId($schemaVehicleId);
-        $stopRequest->setSchemaLineId($schemaLineId);
+        $stopRequest->setSchemaRouteId($schemaRouteId);
         $stopRequest->setSchemaStopId($schemaStopId);
         $stopRequest->setUser($user);
         $this->em->persist($stopRequest);
