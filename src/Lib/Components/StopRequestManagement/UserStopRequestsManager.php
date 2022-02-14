@@ -34,6 +34,19 @@ class UserStopRequestsManager
     }
 
     /**
+     * Returns all the pending stop request for a user. Only devs can order a set of requests, riders will have only one pending request
+     *
+     * @param User $user
+     * @return array|StopRequest[]
+     */
+    public function getUserCurrentRequests(User $user): array
+    {
+        $this->invalidateOldRequests();
+        $repo = $this->em->getRepository(StopRequest::class)->findBy(['user' => $user, 'status' => StopRequestStatusEnum::PENDING]);
+        return $repo;
+    }
+
+    /**
      * Sets a new request for this user invalidating the previous pending one, if there is
      *
      * @param User $user
@@ -42,7 +55,7 @@ class UserStopRequestsManager
      * @param string|null $schemaLineId
      * @return void
      */
-    public function setUserRequest(User $user, int $schemaStopId, ?string $schemaVehicleId, ?string $schemaLineId)
+    public function setUserRequest(User $user, int $schemaStopId, ?string $schemaVehicleId, ?string $schemaLineId, bool $allowMultiplePendingRequests = false)
     {
         $this->invalidateOldRequests();
         $stop = $vehicle = $vehicleLine = $line = null;
@@ -58,29 +71,31 @@ class UserStopRequestsManager
             }
             //Check if vehicle achieves the stop
             $vehicleLine = $vehicle->getRoute();
-            if(!$this->em->getRepository(Route::class)->checkRouteAndStop($vehicleLine, $stop)){
+            if (!$this->em->getRepository(Route::class)->checkRouteAndStop($vehicleLine, $stop)) {
                 throw new InvalidArgumentException("Vehicle does not achieve the stop", 5);
             }
         }
-        if($schemaLineId != null){
+        if ($schemaLineId != null) {
             $line = $this->em->getRepository(Route::class)->findOneBy(['schemaId' => $schemaLineId]);
             if ($line == null) {
                 throw new InvalidArgumentException("Line does not exist", 4);
             }
             //Check if line achieves the stop
-            if(!$this->em->getRepository(Route::class)->checkRouteAndStop($line, $stop)){
+            if (!$this->em->getRepository(Route::class)->checkRouteAndStop($line, $stop)) {
                 throw new InvalidArgumentException("Line does not achieve the stop", 5);
             }
         }
-        if($vehicleLine != null && $line != null && $line->getId() != $vehicleLine->getId()){
+        if ($vehicleLine != null && $line != null && $line->getId() != $vehicleLine->getId()) {
             throw new InvalidArgumentException("Line and vehicle information are different", 6);
         }
 
         //If there is any previous request, cancel it
-        $this->invalidateCurrenUserRequest($user);
+        if (!$allowMultiplePendingRequests) {
+            $this->invalidateCurrenUserRequests($user);
+        }
 
         //IF both line and vehicle are null, there is nothing to do
-        if($schemaLineId == null && $schemaVehicleId == null){
+        if ($schemaLineId == null && $schemaVehicleId == null) {
             return;
         }
 
@@ -99,15 +114,15 @@ class UserStopRequestsManager
      * @param User $user
      * @return void
      */
-    public function invalidateCurrenUserRequest(User $user)
+    public function invalidateCurrenUserRequests(User $user)
     {
         $this->invalidateOldRequests();
-        $previousRequest = $this->getUserCurrentRequest($user);
-        if ($previousRequest != null) {
+        $previousRequests = $this->getUserCurrentRequests($user);
+        foreach ($previousRequests as $previousRequest) {
             $previousRequest->setStatus(StopRequestStatusEnum::CANCELED);
             $this->em->persist($previousRequest);
-            $this->em->flush();
         }
+        $this->em->flush();
     }
 
     /**
@@ -119,7 +134,7 @@ class UserStopRequestsManager
     {
         $limitTime = new DateTime('-1 hour');
         $requests = $this->em->getRepository(StopRequest::class)->findPendingToCancel($limitTime);
-        foreach($requests as $request){
+        foreach ($requests as $request) {
             $request->setStatus(StopRequestStatusEnum::CANCELED);
             $this->em->persist($request);
         }

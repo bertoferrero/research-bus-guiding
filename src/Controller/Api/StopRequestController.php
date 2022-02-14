@@ -63,7 +63,7 @@ class StopRequestController extends AbstractController
             }
 
             //Set Data
-            $userStopRequestsManager->setUserRequest($user, (int)$data['stop_id'], $data['vehicle_id'] ?? null, $data['line_id'] ?? null);
+            $userStopRequestsManager->setUserRequest($user, (int)$data['stop_id'], $data['vehicle_id'] ?? null, $data['line_id'] ?? null, $this->isGranted('ROLE_DEV'));
 
             //return the same get action result
             return $this->getAction($user, $userStopRequestsManager);
@@ -83,7 +83,7 @@ class StopRequestController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $userStopRequestsManager->invalidateCurrenUserRequest($user);
+        $userStopRequestsManager->invalidateCurrenUserRequests($user);
 
         return $this->json('done');
     }
