@@ -35,7 +35,7 @@ class FCMConnector extends AbstractNotificationConnector
                 "data" => $message,
                 "android" => [
                     "direct_boot_ok" => true,
-                    "priority"=> "high",
+                    //"priority"=> "high",
                     "ttl" => "15s"
                 ],
 
