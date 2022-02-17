@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Entity\UserNotificationTopicSubscription;
 use App\Lib\Components\UsersManagement\TopicSubscriptor;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -33,7 +34,7 @@ class UserController extends AbstractController
     }
 
     #[Route('', name: 'api_user_put', methods: ['PUT'])]
-    public function userPutAction(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $em): Response
+    public function userPutAction(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $em, LoggerInterface $logger): Response
     {
         if (null === $user) {
             return $this->json([
@@ -90,8 +91,8 @@ class UserController extends AbstractController
             }
 
             if (isset($data['lat']) && isset($data['lon'])) {
-                $latitude = (float)trim(strip_tags($data['lat']));
-                $longitude = (float)trim(strip_tags($data['lon']));
+                $latitude = (float)trim(strip_tags(str_replace(',','.', $data['lat'])));
+                $longitude = (float)trim(strip_tags(str_replace(',','.', $data['lon'])));
                 $user->setDriverLatitude($latitude);
                 $user->setDriverLongitude($longitude);
                 $em->persist($user);

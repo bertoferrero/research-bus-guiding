@@ -1,10 +1,23 @@
 monolog:
     handlers:
         main:
-            type: stream
-            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            type: rotating_file
+            path: "%kernel.logs_dir%/error-%kernel.environment%.log"
             level: error
-            channels: ["!event"]
+            channels: ["!event", "!doctrine"]
+            max_files: 50
+        debuglog:
+            type: rotating_file
+            path: "%kernel.logs_dir%/debug-%kernel.environment%.log"
+            level: debug
+            channels: ["!event", "!doctrine"]
+            max_files: 50
+        doctrinelog:
+            type: rotating_file
+            path: "%kernel.logs_dir%/doctrine-%kernel.environment%.log"
+            level: debug
+            channels: ["doctrine"]
+            max_files: 50
         # uncomment to get logging in your browser
         # you may have to allow bigger header sizes in your Web server configuration
         #firephp:

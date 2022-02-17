@@ -39,11 +39,13 @@ class VehiclePosition
 
     /**
      * @ORM\Column(type="float")
+     * @Gedmo\Versioned
      */
     private $latitude;
 
     /**
      * @ORM\Column(type="float")
+     * @Gedmo\Versioned
      */
     private $longitude;
 

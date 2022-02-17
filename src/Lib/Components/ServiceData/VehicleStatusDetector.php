@@ -31,7 +31,7 @@ class VehicleStatusDetector
         //Step 1 - Get the nearest point
         $nearestPoint = null;
         if (($trip = $vehicle->getTrip()) != null) {
-            $nearestPoint = $this->getNearestPointFromTrips($vehicle, [$trip], $this->shapeMiddlePointsInterpolation*3);
+            $nearestPoint = $this->getNearestPointFromTrips($vehicle, [$trip], $this->shapeMiddlePointsInterpolation * 3);
         }
         if ($nearestPoint == null && ($route = $vehicle->getRoute()) != null) {
             $nearestPoint = $this->getNearestPointFromRoute($vehicle, $route);
@@ -83,35 +83,45 @@ class VehicleStatusDetector
 
         $nearestPoint = null;
         $shapePointRepo = $this->em->getRepository(ShapePoint::class);
+        $relatedStopsUseful = false;
         //If there are related stops, first, try to find the nearestpoint filtering by these shape sections
         if (count($vehicleRelatedStops)) {
-            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $distanceLimit, $trips, $vehicleRelatedStops);
+            if (($nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $distanceLimit, $trips, $vehicleRelatedStops)) != null) {
+                $relatedStopsUseful = true;
+            }
         }
         //If finally the nearestpoint cannot be found, lets search on the whole shape
         if ($nearestPoint == null) {
             $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $distanceLimit, $trips);
         }
 
-        if($nearestPoint == null){
-            $tripsLog = array_map(function($x){
-                return [$x->getId(), $x->getSchemaId()];
-            }, $trips);
-            $relatedStopsLog = array_map(function($x){
-                return [$x->getId(), $x->getSchemaId()];
-            }, $vehicleRelatedStops);
+        //Loggin moment
+        $tripsLog = array_map(function ($x) {
+            return [$x->getId(), $x->getSchemaId()];
+        }, $trips);
+        $relatedStopsLog = array_map(function ($x) {
+            return [$x->getId(), $x->getSchemaId()];
+        }, $vehicleRelatedStops);
+        if ($nearestPoint == null) {
             $this->logger->debug("No nearest point is detected", [$tripsLog, $distanceLimit, $relatedStopsLog, $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
+        } else {
+            if ($relatedStopsUseful) {
+                $this->logger->debug("Nearest point detected with related stops", [$tripsLog, $distanceLimit, $relatedStopsLog, $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
+            } else {
+                $this->logger->debug("Nearest point detected without related stops", [$tripsLog, $distanceLimit, [], $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
+            }
         }
         return $nearestPoint;
     }
 
     protected function getNearestPointFromRoute(VehiclePosition $vehicle, Route $route): ?ShapePoint
     {
-        
+
         $timeNow = new \DateTime('now', new DateTimeZone($this->parameters->get('app.component.servicedatasync.timezone')));
 
         $trips = $this->em->getRepository(Trip::class)->findByRouteAndWorkingDate($route, $timeNow);
 
-        return $this->getNearestPointFromTrips($vehicle, $trips, $this->shapeMiddlePointsInterpolation*3);
+        return $this->getNearestPointFromTrips($vehicle, $trips, $this->shapeMiddlePointsInterpolation * 3);
     }
 
     #endregion
