@@ -4,7 +4,7 @@ monolog:
             type: rotating_file
             path: "%kernel.logs_dir%/error-%kernel.environment%.log"
             level: error
-            channels: ["!event", "doctrine"]
+            channels: ["!event"]
             max_files: 50
         debuglog:
             type: rotating_file
