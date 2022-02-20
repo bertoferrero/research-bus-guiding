@@ -29,10 +29,14 @@ class TripRepository extends ServiceEntityRepository
 
     public function findByRouteAndWorkingDate(Route $route, \DateTime $workingDate):array{
         //Get today information
-        $timeNow = $workingDate;
-        $today = clone ($timeNow);
-        $today->setTime(0, 0);
-        $weekDay = $this->getWeekDay($today);
+       // $timeNow = $workingDate;
+        //$today = clone ($timeNow);
+        //$today->setTime(0, 0);
+        $weekDay = $this->getWeekDay($workingDate);
+
+        //In many database configuration, the direct using of datetime in dql generates a non valid sql query
+        $todayText = $workingDate->format('Y-m-d');
+        $nowText = $workingDate->format('H:i:s');
 
         $query = $this->createQueryBuilder('t');
         $query->innerJoin('t.calendar', 'c');
@@ -46,7 +50,7 @@ class TripRepository extends ServiceEntityRepository
             OR 
             (cp.startDate <= :today AND cp.endDate >= :today AND cp.' . $weekDay . ' = true) 
             ');
-        $query->setParameter('route', $route)->setParameter('today', $today)->setParameter('timenow', $timeNow);
+        $query->setParameter('route', $route)->setParameter('today', $todayText)->setParameter('timenow', $nowText);
 
         $query->groupBy('t.id');
 
