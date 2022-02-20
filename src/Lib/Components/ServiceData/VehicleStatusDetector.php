@@ -10,6 +10,7 @@ use App\Entity\ServiceData\Trip;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\ServiceData\VehiclePosition;
 use App\Lib\Enum\VehiclePositionStatusEnum;
+use App\Lib\Helpers\DateTimeHelper;
 use DateTimeZone;
 use Doctrine\ORM\Query\Expr\Join;
 use Psr\Log\LoggerInterface;
@@ -21,7 +22,7 @@ class VehicleStatusDetector
     protected int $incoming_meters = 250; //TODO Configuración
     protected int $stopped_meters = 20; //TODO Configuración
 
-    public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $parameters, protected LoggerInterface $logger)
+    public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $parameters, protected LoggerInterface $logger, protected DateTimeHelper $dateTimeHelper)
     {
         $this->shapeMiddlePointsInterpolation = (int)$this->parameters->get('app.component.servicedatasync.shape.middle_points_interpolation');
     }
@@ -117,7 +118,7 @@ class VehicleStatusDetector
     protected function getNearestPointFromRoute(VehiclePosition $vehicle, Route $route): ?ShapePoint
     {
 
-        $timeNow = new \DateTime('now', new DateTimeZone($this->parameters->get('app.component.servicedatasync.timezone')));
+        $timeNow = $this->dateTimeHelper->getDateTimeFromServiceDataTime();
 
         $trips = $this->em->getRepository(Trip::class)->findByRouteAndWorkingDate($route, $timeNow);
 

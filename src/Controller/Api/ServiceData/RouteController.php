@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\ServiceData\Route as ServiceDataRoute;
+use App\Lib\Helpers\DateTimeHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -37,7 +38,7 @@ class RouteController extends AbstractController
     }
 
     #[Route('/{schema_id}/stops', name: 'api_route_stops_get', methods: ['GET'])]
-    public function getStops(EntityManagerInterface $em, string $schema_id): Response
+    public function getStops(EntityManagerInterface $em, string $schema_id, DateTimeHelper $dateTimeHelper): Response
     {
         //Get the line (route)
         $route = $em->getRepository(ServiceDataRoute::class)->findOneBy(['schemaId' => $schema_id]);
@@ -46,7 +47,7 @@ class RouteController extends AbstractController
         }
 
         //Get all the trips for now
-        $timeNow = new \DateTime('now', new \DateTimeZone($this->getParameter('app.component.servicedatasync.timezone')));
+        $timeNow = $dateTimeHelper->getDateTimeFromServiceDataTime();
         $trips = $em->getRepository(Trip::class)->findByRouteAndWorkingDate($route, $timeNow);
 
         //Using this trips we get all the stops
