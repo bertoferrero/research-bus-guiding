@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 class VehicleStatusDetector
 {
     protected $shapeMiddlePointsInterpolation;
-    protected int $incoming_meters = 250; //TODO Configuración
+    protected int $incoming_meters = 125; //TODO Configuración 350-> 30s, 125m -> 15s
     protected int $stopped_meters = 20; //TODO Configuración
 
     public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $parameters, protected LoggerInterface $logger, protected DateTimeHelper $dateTimeHelper)
