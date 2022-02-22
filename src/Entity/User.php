@@ -16,6 +16,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  *  @ORM\Table(indexes={
  *     @ORM\Index(name="driver_vehicle_id", columns={"driver_vehicle_id"})
  * })
+ * @ORM\HasLifecycleCallbacks()
  */
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -81,6 +82,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\Column(type="float", nullable=true)
      */
     private $driverLongitude;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $dateUpd;
 
     public function __construct()
     {
@@ -279,5 +285,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->driverLongitude = $driverLongitude;
 
         return $this;
+    }
+
+    public function getDateUpd(): ?\DateTimeInterface
+    {
+        return $this->dateUpd;
+    }
+
+    public function setDateUpd(\DateTimeInterface $dateUpd): self
+    {
+        $this->dateUpd = $dateUpd;
+
+        return $this;
+    }
+
+    /**
+     * @ORM\PrePersist
+     * @ORM\PreUpdate
+     */
+    public function setDateUpdValue(): void
+    {
+        $this->dateUpd = new \DateTimeImmutable();
     }
 }

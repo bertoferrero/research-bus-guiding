@@ -80,21 +80,6 @@ class VehiclePosition
     private $driver;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Stop::class)
-     */
-    private $prevStop;
-
-    /**
-     * @ORM\ManyToOne(targetEntity=Stop::class)
-     */
-    private $nextStop;
-
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $dateUpd;
-
-    /**
      * @ORM\ManyToOne(targetEntity=Trip::class)
      */
     private $trip;
@@ -103,6 +88,21 @@ class VehiclePosition
      * @ORM\ManyToOne(targetEntity=Route::class)
      */
     private $route;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=ShapePoint::class)
+     */
+    private $lastShapePoint;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $locationTries = 0;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $dateUpd;
 
     public function getId(): ?int
     {
@@ -205,31 +205,7 @@ class VehiclePosition
         return $this;
     }
 
-    public function getPrevStop(): ?Stop
-    {
-        return $this->prevStop;
-    }
-
-    public function setPrevStop(?Stop $prevStop): self
-    {
-        $this->prevStop = $prevStop;
-
-        return $this;
-    }
-
-    public function getNextStop(): ?Stop
-    {
-        return $this->nextStop;
-    }
-
-    public function setNextStop(?Stop $nextStop): self
-    {
-        $this->nextStop = $nextStop;
-
-        $this->setschemaStopId($this->nextStop?->getschemaId());
-
-        return $this;
-    }
+   
 
     public function getDateUpd(): ?\DateTimeInterface
     {
@@ -279,6 +255,32 @@ class VehiclePosition
         $this->route = $route;
         $this->setSchemaRouteId($this->route?->getschemaId());
         
+
+        return $this;
+    }
+
+    public function getLastShapePoint(): ?ShapePoint
+    {
+        return $this->lastShapePoint;
+    }
+
+    public function setLastShapePoint(?ShapePoint $lastShapePoint): self
+    {
+        $this->lastShapePoint = $lastShapePoint;
+
+        $this->setschemaStopId($lastShapePoint?->getNextStopInRoute()?->getschemaId());
+
+        return $this;
+    }
+
+    public function getLocationTries(): ?int
+    {
+        return $this->locationTries;
+    }
+
+    public function setLocationTries(int $locationTries): self
+    {
+        $this->locationTries = $locationTries;
 
         return $this;
     }
