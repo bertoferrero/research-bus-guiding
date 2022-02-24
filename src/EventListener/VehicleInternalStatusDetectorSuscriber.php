@@ -72,7 +72,7 @@ class VehicleInternalStatusDetectorSuscriber implements EventSubscriberInterface
             static::$entitiesToProcess = [];
             $em = $args->getEntityManager();
             foreach ($entitiesToProcess as $entity) {
-                $entity = $this->locator->detectVehicleStopAndStatus($entity, true);
+                $entity = $this->locator->detectVehicleStopAndStatus($entity);
             }
             $em->flush();
         }

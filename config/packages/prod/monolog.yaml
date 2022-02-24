@@ -4,7 +4,7 @@ monolog:
             type: rotating_file
             path: "%kernel.logs_dir%/error-%kernel.environment%.log"
             level: error
-            channels: ["!event", "!doctrine"]
+            channels: ["!event"]
             max_files: 50
         debuglog:
             type: rotating_file
@@ -12,12 +12,12 @@ monolog:
             level: debug
             channels: ["!event", "!doctrine"]
             max_files: 50
-        doctrinelog:
-            type: rotating_file
-            path: "%kernel.logs_dir%/doctrine-%kernel.environment%.log"
-            level: debug
-            channels: ["doctrine"]
-            max_files: 50
+        #doctrinelog:
+        #    type: rotating_file
+        #    path: "%kernel.logs_dir%/doctrine-%kernel.environment%.log"
+        #    level: debug
+        #    channels: ["doctrine"]
+        #    max_files: 50
         console:
             type: console
             process_psr_3_messages: false

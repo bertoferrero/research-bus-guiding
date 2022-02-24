@@ -24,7 +24,7 @@ class ShapePointRepository extends ServiceEntityRepository
         parent::__construct($registry, ShapePoint::class);
     }
 
-    protected function nearestPointsQueryBuilder(float $latitude, float $longitude, float $distanceLimit = 0, array $previousStopsForPoints = []): QueryBuilder
+    protected function nearestPointsQueryBuilder(float $latitude, float $longitude, float $distanceLimit = 0, array $previousStopsForPoints = [], ?ShapePoint $alwaysForwardPoint = null): QueryBuilder
     {
         //https://stackoverflow.com/questions/2234204/find-nearest-latitude-longitude-with-an-sql-query
         //https://github.com/beberlei/DoctrineExtensions
@@ -40,6 +40,18 @@ class ShapePointRepository extends ServiceEntityRepository
         $query->setParameters(['latitude' => $latitude, 'longitude' => $longitude]);
         if (!empty($previousStopsForPoints)) {
             $query->andWhere('r.prevStopInRoute IN (:previousStops)')->setParameter('previousStops', $previousStopsForPoints);
+            if($alwaysForwardPoint != null){
+                $query->andWhere('(
+                    r.nextStopRemainingDistance <= :alwf_remainingDistance
+                    OR
+                    r.prevStopInRoute != :alwf_prevStop
+                    OR
+                    r.shape != :alwf_shape
+                )');
+                $query->setParameter("alwf_remainingDistance", $alwaysForwardPoint->getNextStopRemainingDistance());
+                $query->setParameter("alwf_prevStop", $alwaysForwardPoint->getPrevStopInRoute());
+                $query->setParameter("alwf_shape", $alwaysForwardPoint->getShape());
+            }
         }
         if ($distanceLimit > 0) {
             $query->having('distance <= :distanceLimit')->setParameter('distanceLimit', $distanceLimit);
@@ -75,11 +87,12 @@ class ShapePointRepository extends ServiceEntityRepository
      * @param float $longitude
      * @param array<int,Trip> $trips
      * @param array<int,Stop> $previousStopsForPoints
+     * @param ShapePoint|null $alwaysForwardPoint this only works if $previousStopsForPoints is defined. Defines the last point in the route from the algorithm must to go ahead. The result cannot be a previous point.
      * @return ShapePoint|null
      */
-    public function findNearestPointFromTripSet(float $latitude, float $longitude, float $distanceLimit, array $trips, array $previousStopsForPoints = []): ?ShapePoint
+    public function findNearestPointFromTripSet(float $latitude, float $longitude, float $distanceLimit, array $trips, array $previousStopsForPoints = [], ?ShapePoint $alwaysForwardPoint = null): ?ShapePoint
     {
-        $query = $this->nearestPointsQueryBuilder($latitude, $longitude, $distanceLimit, $previousStopsForPoints);
+        $query = $this->nearestPointsQueryBuilder($latitude, $longitude, $distanceLimit, $previousStopsForPoints, $alwaysForwardPoint);
         $query->innerJoin('r.shape', 'shape');
         $query->innerJoin('shape.trips', 'trip', Join::WITH, 'trip IN (:trips)')->setParameter('trips', $trips);
         $query->setMaxResults(1);

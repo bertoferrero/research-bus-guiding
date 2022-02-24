@@ -10,6 +10,7 @@ use App\Entity\ServiceData\Trip;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\ServiceData\VehiclePosition;
 use App\Lib\Enum\VehiclePositionStatusEnum;
+use App\Lib\Helpers\DateTimeHelper;
 use DateTimeZone;
 use Doctrine\ORM\Query\Expr\Join;
 use Psr\Log\LoggerInterface;
@@ -18,15 +19,18 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 class VehicleStatusDetector
 {
     protected $shapeMiddlePointsInterpolation;
-    protected int $incoming_meters = 250; //TODO Configuración
+    protected int $incoming_meters = 125; //TODO Configuración 350-> 30s, 125m -> 15s
     protected int $stopped_meters = 20; //TODO Configuración
 
-    public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $parameters, protected LoggerInterface $logger)
+    protected int $maxTriesLocationFilterAlwaysForward = 1; //Max location tries counting for avoiding "always forward" filter
+    protected int $maxTriesLocationFilterSubRoute = 2; //Max location tries counting for avoiding sub route filtering
+
+    public function __construct(protected EntityManagerInterface $em, protected ParameterBagInterface $parameters, protected LoggerInterface $logger, protected DateTimeHelper $dateTimeHelper)
     {
         $this->shapeMiddlePointsInterpolation = (int)$this->parameters->get('app.component.servicedatasync.shape.middle_points_interpolation');
     }
 
-    public function detectVehicleStopAndStatus(VehiclePosition $vehicle, bool $persist = true): VehiclePosition
+    public function detectVehicleStopAndStatus(VehiclePosition $vehicle): VehiclePosition
     {
         //Step 1 - Get the nearest point
         $nearestPoint = null;
@@ -37,6 +41,9 @@ class VehicleStatusDetector
             $nearestPoint = $this->getNearestPointFromRoute($vehicle, $route);
         }
         if ($nearestPoint == null) {
+            //Increment location try counter
+            $vehicle->setLocationTries($vehicle->getLocationTries() + 1);
+            $this->em->persist($vehicle);
             $this->logger->error("No nearest point is detected AT ALL", [$vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
             return $vehicle;
             throw new \Exception("No nearest point is detected");
@@ -54,13 +61,11 @@ class VehicleStatusDetector
         }
 
         //3- Update the entity
-        $vehicle->setPrevStop($nearestPoint->getPrevStopInRoute());
-        $vehicle->setNextStop($nearestPoint->getNextStopInRoute());
+        $vehicle->setLastShapePoint($nearestPoint);
+        $vehicle->setLocationTries(0);
         $vehicle->setCurrentStatus($vehicleStopStatus);
 
-        if ($persist) {
-            $this->em->persist($vehicle);
-        }
+        $this->em->persist($vehicle);
         return $vehicle;
     }
 
@@ -71,29 +76,30 @@ class VehicleStatusDetector
         if (count($trips) == 0) {
             return null;
         }
+        //Get tries
+        $tries = $vehicle->getLocationTries();
 
-        //First, get related stops from vehicle history data
+
+
+        //First, get related data to be used
         $vehicleRelatedStops = [];
-        if ($vehicle->getPrevStop() != null) {
-            $vehicleRelatedStops[] = $vehicle->getPrevStop();
-        }
-        if ($vehicle->getNextStop() != null) {
-            $vehicleRelatedStops[] = $vehicle->getNextStop();
-        }
-
-        $nearestPoint = null;
-        $shapePointRepo = $this->em->getRepository(ShapePoint::class);
-        $relatedStopsUseful = false;
-        //If there are related stops, first, try to find the nearestpoint filtering by these shape sections
-        if (count($vehicleRelatedStops)) {
-            if (($nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $distanceLimit, $trips, $vehicleRelatedStops)) != null) {
-                $relatedStopsUseful = true;
+        $lastPoint = null;
+        if ($tries < $this->maxTriesLocationFilterSubRoute) {
+            $lastPoint = $vehicle->getLastShapePoint();
+            if ($lastPoint != null) {
+                if ($lastPoint->getPrevStopInRoute() != null) {
+                    $vehicleRelatedStops[] = $lastPoint->getPrevStopInRoute();
+                }
+                if ($lastPoint->getNextStopInRoute() != null) {
+                    $vehicleRelatedStops[] = $lastPoint->getNextStopInRoute();
+                }
             }
         }
-        //If finally the nearestpoint cannot be found, lets search on the whole shape
-        if ($nearestPoint == null) {
-            $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $distanceLimit, $trips);
-        }
+
+        //Try to get the point
+        $nearestPoint = null;
+        $shapePointRepo = $this->em->getRepository(ShapePoint::class);
+        $nearestPoint = $shapePointRepo->findNearestPointFromTripSet($vehicle->getLatitude(), $vehicle->getLongitude(), $distanceLimit, $trips, $vehicleRelatedStops, ($tries < $this->maxTriesLocationFilterAlwaysForward ? $lastPoint: null));
 
         //Loggin moment
         $tripsLog = array_map(function ($x) {
@@ -103,13 +109,9 @@ class VehicleStatusDetector
             return [$x->getId(), $x->getSchemaId()];
         }, $vehicleRelatedStops);
         if ($nearestPoint == null) {
-            $this->logger->debug("No nearest point is detected", [$tripsLog, $distanceLimit, $relatedStopsLog, $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
+            $this->logger->debug("No nearest point is detected", [$tries, $tripsLog, $distanceLimit, $relatedStopsLog, $lastPoint?->getId(), $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
         } else {
-            if ($relatedStopsUseful) {
-                $this->logger->debug("Nearest point detected with related stops", [$tripsLog, $distanceLimit, $relatedStopsLog, $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
-            } else {
-                $this->logger->debug("Nearest point detected without related stops", [$tripsLog, $distanceLimit, [], $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
-            }
+            $this->logger->debug("Nearest point detected", [$nearestPoint->getId(), $tries, $tripsLog, $distanceLimit, $relatedStopsLog, $lastPoint?->getId(), $vehicle->getLatitude(), $vehicle->getLongitude(), $vehicle->getSchemaRouteId(), $vehicle->getschemaTripId(), $vehicle->getschemaVehicleId()]);
         }
         return $nearestPoint;
     }
@@ -117,7 +119,7 @@ class VehicleStatusDetector
     protected function getNearestPointFromRoute(VehiclePosition $vehicle, Route $route): ?ShapePoint
     {
 
-        $timeNow = new \DateTime('now', new DateTimeZone($this->parameters->get('app.component.servicedatasync.timezone')));
+        $timeNow = $this->dateTimeHelper->getDateTimeFromServiceDataTime();
 
         $trips = $this->em->getRepository(Trip::class)->findByRouteAndWorkingDate($route, $timeNow);
 
@@ -135,6 +137,9 @@ class VehicleStatusDetector
      */
     protected function calculateDistanceUntilNextStop(VehiclePosition $vehicle, ShapePoint $nearestPoint): float
     {
+        //We cannot use the distance between vehicle and nearestPoint because of the low GPS accuracy. So, all of this is not needed
+        return (float)$nearestPoint->getNextStopRemainingDistance();
+/*
         $distanceToStop = null;
         //We get the next point from nearest point, if the distance is less than the interpolation it means that the vehicle is going to it
         if ($nearestPoint->getStop() == null) { //Si el punto actual es parada le damos la mitad del margen de beneficio
@@ -166,6 +171,6 @@ class VehicleStatusDetector
         //We have the distance until the point, we must to add the distance until next stop
         $distanceToStop += (float)$nearestPoint->getNextStopRemainingDistance();
 
-        return $distanceToStop;
+        return $distanceToStop;*/
     }
 }
