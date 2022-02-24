@@ -87,7 +87,7 @@ class UserController extends AbstractController
                     $user->setDriverRoute($route);
                 }
                 $em->persist($user);
-                $returnData['route_id'] = $user->getDriverRoute()?->getId();
+                $returnData['route_id'] = $user->getDriverRoute()?->getschemaId();
             }
 
             if (isset($data['lat']) && isset($data['lon'])) {
