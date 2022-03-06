@@ -138,6 +138,11 @@ class UserStopRequestsManager
             $request->setStatus(StopRequestStatusEnum::CANCELED);
             $this->em->persist($request);
         }
+        $requests = $this->em->getRepository(StopRequest::class)->findInProgressToFinish($limitTime);
+        foreach ($requests as $request) {
+            $request->setStatus(StopRequestStatusEnum::PROCESSED);
+            $this->em->persist($request);
+        }
         $this->em->flush();
     }
 }

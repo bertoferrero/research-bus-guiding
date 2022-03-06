@@ -15,6 +15,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
  *     @ORM\Index(name="vehicle_id_idx", columns={"schema_vehicle_id"}),
  *     @ORM\Index(name="route_id_idx", columns={"schema_route_id"}),
  *     @ORM\Index(name="stop_id_idx", columns={"schema_stop_id"}),
+ *     @ORM\Index(name="designated_vehicle_id_idx", columns={"designated_schema_vehicle_id"}),
  * })
  * @ORM\HasLifecycleCallbacks()
  */
@@ -63,6 +64,11 @@ class StopRequest
      * @ORM\Column(type="datetime")
      */
     private $dateUpd;
+
+    /**
+     * @ORM\Column(type="string", length=128, nullable=true)
+     */
+    private $designatedSchemaVehicleId;
 
     public function __construct()
     {
@@ -173,5 +179,17 @@ class StopRequest
     public function setUpdateValue(): void
     {
         $this->dateUpd = new \DateTimeImmutable();
+    }
+
+    public function getDesignatedSchemaVehicleId(): ?string
+    {
+        return $this->designatedSchemaVehicleId;
+    }
+
+    public function setDesignatedSchemaVehicleId(?string $designatedSchemaVehicleId): self
+    {
+        $this->designatedSchemaVehicleId = $designatedSchemaVehicleId;
+
+        return $this;
     }
 }

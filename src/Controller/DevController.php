@@ -39,4 +39,13 @@ class DevController extends AbstractController
         $notificationManager->sendStopNotification($vehiclePosition);
         return new Response('ok');
     }
+    /**
+     * @Route("/testdismissstopsignaldriver")
+     */
+    public function dismissstopsignaldriver(EntityManagerInterface $em, NotificationManager $notificationManager): Response
+    {
+        $vehiclePosition = $em->find(VehiclePosition::class, 1);
+        $notificationManager->sendDismissStopNotification($vehiclePosition);
+        return new Response('ok');
+    }
 }

@@ -14,7 +14,6 @@ class VehicleStopNotificator
 {
     public function __construct(protected EntityManagerInterface $em, protected UserStopRequestsManager $userStopRequestsManager, protected NotificationManager $notificationManager)
     {
-        
     }
 
     public function sendVehicleStopNotification(VehiclePosition $entity)
@@ -38,19 +37,36 @@ class VehicleStopNotificator
 
         //Search for requested stops
         $stops = $this->em->getRepository(StopRequest::class)->findPending($stopId, $vehicleId, $lineId);
-        if(count($stops) == 0){
-            return;
+
+        //Search for already sent stop signal and required now to dismiss the alert (stop changed)
+        $inProgressStops = $this->em->getRepository(StopRequest::class)->findInProgressStopChanged($stopId, $vehicleId);
+
+        if (count($stops) != 0) {
+            //Set all stops as complete
+            foreach ($stops as $stop) {
+                $stop->setStatus(StopRequestStatusEnum::IN_PROGRESS);
+                $stop->setDesignatedSchemaVehicleId($entity->getschemaVehicleId());
+                $this->em->persist($stop);
+            }
+            $this->em->flush();
+
+            //Send the notification 
+            $this->notificationManager->sendStopNotification($entity);
         }
 
-        //Set all stops as complete
-        foreach($stops as $stop){
-            $stop->setStatus(StopRequestStatusEnum::PROCESSED);
-            $this->em->persist($stop);
-        }
-        $this->em->flush();
+        if (count($inProgressStops) != 0) {
+            //Set all stops as complete
+            foreach ($inProgressStops as $stop) {
+                $stop->setStatus(StopRequestStatusEnum::PROCESSED);
+                $this->em->persist($stop);
+            }
+            $this->em->flush();
 
-        //Send the notification 
-        $this->notificationManager->sendStopNotification($entity);
+            //Send the notification only if no prev stop notificatino has been sent
+            if (count($stops) == 0) {
+                $this->notificationManager->sendDismissStopNotification($entity);
+            }
+        }
     }
 
     /**
@@ -59,20 +75,22 @@ class VehicleStopNotificator
      * @param StopRequest $entity
      * @return void
      */
-    public function sendNotificationFromRequestEntity(StopRequest $entity){
+    public function sendNotificationFromRequestEntity(StopRequest $entity)
+    {
         $vehicleRepo = $this->em->getRepository(VehiclePosition::class);
         //Check if there is a vehicle which the requested stop as objective
-        if($entity->GetSchemaVehicleId()){
+        if ($entity->GetSchemaVehicleId()) {
             $vehicle = $vehicleRepo->findOneBy(['schemaVehicleId' => $entity->getSchemaVehicleId(), 'schemaStopId' => $entity->getSchemaStopId(), 'currentStatus' => [VehiclePositionStatusEnum::IN_TRANSIT_TO, VehiclePositionStatusEnum::INCOMING_AT]]);
-        }else{
+        } else {
             $vehicle = $vehicleRepo->findOneBy(['schemaRouteId' => $entity->getSchemaRouteId(), 'schemaStopId' => $entity->getSchemaStopId(), 'currentStatus' => [VehiclePositionStatusEnum::IN_TRANSIT_TO, VehiclePositionStatusEnum::INCOMING_AT]]);
         }
-        if($vehicle == null){
+        if ($vehicle == null) {
             return;
         }
 
         //Set the request as completed and send the notification
-        $entity->setStatus(StopRequestStatusEnum::PROCESSED);
+        $entity->setStatus(StopRequestStatusEnum::IN_PROGRESS);
+        $entity->setDesignatedSchemaVehicleId($vehicle->getschemaVehicleId());
         $this->em->persist($entity);
         $this->em->flush();
 

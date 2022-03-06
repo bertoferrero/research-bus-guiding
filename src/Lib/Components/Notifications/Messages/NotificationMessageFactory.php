@@ -42,4 +42,18 @@ class NotificationMessageFactory
 
         return $message;
     }
+
+    public function composeDismissStopRequestMessage(VehiclePosition $vehiclePosition): DismissStopRequestMessage
+    {
+        $routeSchemaId = $vehiclePosition->getSchemaRouteId();
+        $message = new DismissStopRequestMessage();
+        $message->setVehicleId($vehiclePosition->getschemaVehicleId());
+        $message->setStatus($vehiclePosition->getCurrentStatus());
+        $message->setStopId($vehiclePosition->getschemaStopId());
+        if(!empty($routeSchemaId)){
+            $message->setLineId($routeSchemaId);
+        }
+
+        return $message;
+    }
 }

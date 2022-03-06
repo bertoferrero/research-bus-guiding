@@ -57,4 +57,23 @@ class NotificationManager
         $notificationConnector = $this->connectorFactory->getNotificationConnector();
         $notificationConnector->sendMessageAsync([$drivertoken], $message->toArray());
     }
+
+    /**
+     * Sends the dismiss stop notification to drivers related to VehiclePosition entity
+     *
+     * @param VehiclePosition $entity
+     * @return void
+     */
+    public function sendDismissStopNotification(VehiclePosition $entity)
+    {
+        $drivertoken = $entity->getDriver()?->getNotificationDeviceToken();
+        if ($drivertoken == null) {
+            return;
+        }
+
+        //Compose the message and send the notification
+        $message = $this->notificationMessageFactory->composeDismissStopRequestMessage($entity);
+        $notificationConnector = $this->connectorFactory->getNotificationConnector();
+        $notificationConnector->sendMessageAsync([$drivertoken], $message->toArray());
+    }
 }

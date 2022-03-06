@@ -21,25 +21,52 @@ class StopRequestRepository extends ServiceEntityRepository
         parent::__construct($registry, StopRequest::class);
     }
 
-    public function findPendingToCancel(DateTime $dateLimit){
+    public function findPendingToCancel(DateTime $dateLimit)
+    {
         return $this->createQueryBuilder('entity')
-        ->andWhere('entity.status = :status')->setParameter('status', StopRequestStatusEnum::PENDING)
-        ->andWhere('entity.dateAdd < :dateLimit')->setParameter('dateLimit', $dateLimit)
-        ->getQuery()->getResult();
+            ->andWhere('entity.status = :status')->setParameter('status', StopRequestStatusEnum::PENDING)
+            ->andWhere('entity.dateAdd < :dateLimit')->setParameter('dateLimit', $dateLimit)
+            ->getQuery()->getResult();
     }
 
-    public function findPending(int $stopId, string $vehicleId, ?string $lineId){
+    public function findInProgressToFinish(DateTime $dateLimit)
+    {
+        return $this->createQueryBuilder('entity')
+            ->andWhere('entity.status = :status')->setParameter('status', StopRequestStatusEnum::IN_PROGRESS)
+            ->andWhere('entity.dateAdd < :dateLimit')->setParameter('dateLimit', $dateLimit)
+            ->getQuery()->getResult();
+    }
+
+    public function findPending(int $stopId, string $vehicleId, ?string $lineId)
+    {
         $query = $this->createQueryBuilder('entity')
-        ->andWhere('entity.status = :status')->setParameter('status', StopRequestStatusEnum::PENDING)
-        ->andWhere('entity.schemaStopId = :stopId')->setParameter('stopId', $stopId);
-        if($lineId != null){
+            ->andWhere('entity.status = :status')->setParameter('status', StopRequestStatusEnum::PENDING)
+            ->andWhere('entity.schemaStopId = :stopId')->setParameter('stopId', $stopId);
+        if ($lineId != null) {
             $query->andWhere('(entity.schemaVehicleId = :vehicleId OR entity.schemaVehicleId IS NULL)')->setParameter('vehicleId', $vehicleId);
             $query->andWhere('(entity.schemaRouteId = :lineId OR entity.schemaRouteId IS NULL)')->setParameter('lineId', $lineId);
             $query->andWhere('(entity.schemaVehicleId IS NOT NULL OR entity.schemaRouteId IS NOT NULL)');
-        }
-        else{
+        } else {
             $query->andWhere('entity.schemaVehicleId = :vehicleId')->setParameter('vehicleId', $vehicleId);
         }
+
+        return $query->getQuery()->getResult();
+    }
+
+    /**
+     * Returns those stop requests already sent to a vehicle and linked to a different stop
+     *
+     * @param integer $currentStopId
+     * @param string $vehicleId
+     * @return void
+     */
+    public function findInProgressStopChanged(int $currentStopId, string $vehicleId)
+    {
+        $query = $this->createQueryBuilder('entity')
+            ->andWhere('entity.status = :status')->setParameter('status', StopRequestStatusEnum::IN_PROGRESS)
+            ->andWhere('entity.schemaStopId != :stopId')->setParameter('stopId', $currentStopId);
+        $query->andWhere('entity.designatedSchemaVehicleId = :vehicleId')->setParameter('vehicleId', $vehicleId);
+
 
         return $query->getQuery()->getResult();
     }
