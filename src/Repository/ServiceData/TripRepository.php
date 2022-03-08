@@ -2,6 +2,7 @@
 
 namespace App\Repository\ServiceData;
 
+use App\Entity\ServiceData\Stop;
 use App\Entity\ServiceData\Trip;
 use App\Entity\ServiceData\Route;
 use Doctrine\ORM\Query\Expr\Join;
@@ -51,6 +52,40 @@ class TripRepository extends ServiceEntityRepository
             (cp.startDate <= :today AND cp.endDate >= :today AND cp.' . $weekDay . ' = true) 
             ');
         $query->setParameter('route', $route)->setParameter('today', $todayText)->setParameter('timenow', $nowText);
+
+        $query->groupBy('t.id');
+
+        $trips = $query->getQuery()->getResult();
+
+        return $trips;
+    }
+
+    public function findByStopAndWorkingDate(Stop $stop, \DateTime $workingDate):array{
+        //Get today information
+       // $timeNow = $workingDate;
+        //$today = clone ($timeNow);
+        //$today->setTime(0, 0);
+        $weekDay = $this->getWeekDay($workingDate);
+
+        //In many database configuration, the direct using of datetime in dql generates a non valid sql query
+        $todayText = $workingDate->format('Y-m-d');
+        $nowText = $workingDate->format('H:i:s');
+
+        $query = $this->createQueryBuilder('t');
+        $query->innerJoin('t.calendar', 'c');
+        $query->innerJoin('c.calendarPlan', 'cp');
+        $query->leftJoin('c.calendarDates', 'cd', Join::WITH, 'cd.date = :today');
+        $query->innerJoin('t.shape', 'shape');
+        $query->innerJoin('shape.shapePoints','shapepoints',Join::WITH, 'shapepoints.stop = :stop');
+        $query->andwhere('cd IS NULL OR cd.isRemovingDate = false'); //Filter for avoiding removed dates        
+        $query->andWhere('t.hourStart IS NOT NULL AND t.hourEnd IS NOT NULL AND t.hourStart <= :timenow AND t.hourEnd >= :timenow'); //Filters about routes and working hours
+        //Filter forcing added dates on calendardates table or getting working days from calendarplan
+        $query->andwhere('
+            ( cd IS NOT NULL AND cd.isRemovingDate = false) 
+            OR 
+            (cp.startDate <= :today AND cp.endDate >= :today AND cp.' . $weekDay . ' = true) 
+            ');
+        $query->setParameter('stop', $stop)->setParameter('today', $todayText)->setParameter('timenow', $nowText);
 
         $query->groupBy('t.id');
 

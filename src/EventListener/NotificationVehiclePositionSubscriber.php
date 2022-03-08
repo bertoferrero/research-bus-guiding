@@ -42,7 +42,10 @@ class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
 
         if ($entity->getCurrentStatus() != null && $entity->getschemaStopId() != null) {
             if (!isset(static::$entitiesToNotify[$entity->getId()])) {
-                static::$entitiesToNotify[$entity->getId()] = $entity;
+                static::$entitiesToNotify[$entity->getId()] = [$entity, $args->hasChangedField('schemaStopId')];
+            }
+            else{
+                static::$entitiesToNotify[$entity->getId()][1] = static::$entitiesToNotify[$entity->getId()][1] || $args->hasChangedField('schemaStopId');
             }
         }
     }
@@ -67,8 +70,8 @@ class NotificationVehiclePositionSubscriber implements EventSubscriberInterface
         if (count(static::$entitiesToNotify) > 0) {
             $entitiesToNotify = static::$entitiesToNotify;
             static::$entitiesToNotify = [];
-            foreach ($entitiesToNotify as $entity) {
-                $this->notificationManager->sendVehiclePositionNotification($entity);
+            foreach ($entitiesToNotify as $entityrow) {
+                $this->notificationManager->sendVehiclePositionNotification($entityrow[0], $entityrow[1]);
             }
         }
     }

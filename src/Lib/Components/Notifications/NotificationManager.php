@@ -8,6 +8,7 @@ use App\Entity\ServiceData\VehiclePosition;
 use App\Lib\Components\Notifications\TopicResolver;
 use App\Lib\Components\Notifications\Connectors\NotificationConnectorFactory;
 use App\Lib\Components\Notifications\Messages\NotificationMessageFactory;
+use App\Lib\Enum\VehiclePositionStatusEnum;
 
 class NotificationManager
 {
@@ -21,10 +22,18 @@ class NotificationManager
      * @param VehiclePosition $entity
      * @return void
      */
-    public function sendVehiclePositionNotification(VehiclePosition $entity)
+    public function sendVehiclePositionNotification(VehiclePosition $entity, bool $changeStopId = false)
     {
         if ($entity->getCurrentStatus() === null || $entity->getschemaStopId() === null) {
             return;
+        }
+
+        //If a change stop ID has been detected, we force an in transit to message
+        if($changeStopId && $entity->getCurrentStatus() != VehiclePositionStatusEnum::IN_TRANSIT_TO){
+            $originalStatus = $entity->getCurrentStatus();
+            $entity->setCurrentStatus(VehiclePositionStatusEnum::IN_TRANSIT_TO);
+            $this->sendVehiclePositionNotification($entity);
+            $entity->setCurrentStatus(($originalStatus));
         }
 
         //Lets get the notification topics and the devices tokens
