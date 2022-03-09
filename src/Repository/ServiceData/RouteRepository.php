@@ -22,7 +22,8 @@ class RouteRepository extends ServiceEntityRepository
         parent::__construct($registry, Route::class);
     }
 
-    public function findBySchemaId(string $schemaId){
+    public function findBySchemaId(string $schemaId)
+    {
         $query = $this->createQueryBuilder('entity');
         $query->andWhere('entity.schemaId = :schemaid')->setParameter('schemaid', $schemaId);
         return $query->getQuery()->getOneOrNullResult();
@@ -38,7 +39,8 @@ class RouteRepository extends ServiceEntityRepository
         return $query;
     }
 
-    public function findByStop(Stop $stop){
+    public function findByStop(Stop $stop)
+    {
         return $this->findByStopQB($stop)->getQuery()->getResult();
     }
 
@@ -49,7 +51,8 @@ class RouteRepository extends ServiceEntityRepository
      * @param Stop $stop
      * @return boolean
      */
-    public function checkRouteAndStop(Route $route, Stop $stop):bool{
+    public function checkRouteAndStop(Route $route, Stop $stop): bool
+    {
         $query = $this->findByStopQB($stop);
         $query->andWhere('entity = :route')->setParameter('route', $route);
         $query->select('count(entity.id)');
@@ -57,9 +60,10 @@ class RouteRepository extends ServiceEntityRepository
         return $count > 0;
     }
 
-    public function findByStopAndWorkingDate(Stop $stop, \DateTime $workingDate):array{
+    public function findByStopAndWorkingDate(Stop $stop, \DateTime $workingDate): array
+    {
         //Get today information
-       // $timeNow = $workingDate;
+        // $timeNow = $workingDate;
         //$today = clone ($timeNow);
         //$today->setTime(0, 0);
         $weekDay = $this->getWeekDay($workingDate);
@@ -69,12 +73,12 @@ class RouteRepository extends ServiceEntityRepository
         $nowText = $workingDate->format('H:i:s');
 
         $query = $this->createQueryBuilder('r');
-        $query->innerJoin('r.trips','t');
+        $query->innerJoin('r.trips', 't');
         $query->innerJoin('t.calendar', 'c');
         $query->innerJoin('c.calendarPlan', 'cp');
         $query->leftJoin('c.calendarDates', 'cd', Join::WITH, 'cd.date = :today');
         $query->innerJoin('t.shape', 'shape');
-        $query->innerJoin('shape.shapePoints','shapepoints',Join::WITH, 'shapepoints.stop = :stop');
+        $query->innerJoin('shape.shapePoints', 'shapepoints', Join::WITH, 'shapepoints.stop = :stop');
         $query->andwhere('cd IS NULL OR cd.isRemovingDate = false'); //Filter for avoiding removed dates        
         $query->andWhere('t.hourStart IS NOT NULL AND t.hourEnd IS NOT NULL AND t.hourStart <= :timenow AND t.hourEnd >= :timenow'); //Filters about routes and working hours
         //Filter forcing added dates on calendardates table or getting working days from calendarplan
