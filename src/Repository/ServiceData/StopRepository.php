@@ -55,6 +55,35 @@ class StopRepository extends ServiceEntityRepository
         return $query->getQuery()->getResult();
     }
 
+    public function findByLatitudeLongitude(float $latitude, float $longitude, float $distanceLimit = 0, ?float &$distance = null): ?Stop
+    {
+        //https://stackoverflow.com/questions/2234204/find-nearest-latitude-longitude-with-an-sql-query
+        //https://github.com/beberlei/DoctrineExtensions
+        $query = $this->createQueryBuilder('r');
+        $query->addSelect('(6371 *
+        acos(cos(radians(:latitude)) * 
+        cos(radians(r.latitude)) * 
+        cos(radians(r.longitude) - 
+        radians(:longitude)) + 
+        sin(radians(:latitude)) * 
+        sin(radians(r.latitude))))*1000 as distance');
+        $query->orderBy('distance', ' ASC');
+        $query->setParameters(['latitude' => $latitude, 'longitude' => $longitude]);        
+        if ($distanceLimit > 0) {
+            $query->having('distance <= :distanceLimit')->setParameter('distanceLimit', $distanceLimit);
+        }
+        $query->setMaxResults(1);
+
+        $result = $query->getQuery()->getOneOrNullResult();
+        if (!empty($result)) {
+            if($distance!==null){
+                $distance = (float)$result["distance"];
+            }
+            return $result[0];
+        }
+        return null;
+    }
+
     /*public function findByRoute(Route $route){
         //TODO This only could work if there is one trip and one stoptime between route and stops... if this changes, for example, with a different timeshift on weekend, this will fail
         $query = $this->createQueryBuilder('s');

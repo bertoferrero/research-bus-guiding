@@ -59,6 +59,27 @@ class StopController extends AbstractController
     }
 
     /**
+     * Gets one stop by latitude and longitude
+     */
+    #[Route('/nearest/{latitude}/{longitude}', name: 'api_stop_get_one_gps', methods: ['GET'])]
+    public function getOneGpsAction(float $latitude, float $longitude, EntityManagerInterface $em): Response
+    {
+        $distance = 0;
+        $stop = $em->getRepository(Stop::class)->findByLatitudeLongitude($latitude, $longitude, 0, $distance);
+        if (empty($stop)) {
+            return $this->json(null, Response::HTTP_NOT_FOUND);
+        }
+        return $this->json([
+            'id' => $stop->getSchemaId(),
+            'lat' => $stop->getLatitude(),
+            'lng' => $stop->getLongitude(),
+            'name' => $stop->getName(),
+            'code' => $stop->getCode(),
+            'distance' => $distance
+        ]);
+    }
+
+    /**
      * Gets the rotes available for one stop
      */
     #[Route('/{schema_id}/routes', name: 'api_stop_get_routes', methods: ['GET'])]
@@ -69,6 +90,19 @@ class StopController extends AbstractController
             return $this->json(null, Response::HTTP_NOT_FOUND);
         }
 
+        return $this->json($this->getRoutesForStop($stop, $em, $dateTimeHelper));
+    }
+
+    /**
+     * Returns all the routes for a stop properly formatted 
+     *
+     * @param Stop $stop
+     * @param EntityManagerInterface $em
+     * @param DateTimeHelper $dateTimeHelper
+     * @return array
+     */
+    protected function getRoutesForStop(Stop $stop, EntityManagerInterface $em, DateTimeHelper $dateTimeHelper): array
+    {
         //Get all the trips working on this stop
         $timeNow = $dateTimeHelper->getDateTimeFromServiceDataTime();
         //Using this trips we get all the routes
@@ -83,7 +117,7 @@ class StopController extends AbstractController
             ];
         }
 
-        return $this->json($linesArray);
+        return $linesArray;
     }
 
     /*#[Route('/{schema_id}/stops', name: 'api_route_stops_get', methods: ['GET'])]
