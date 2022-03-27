@@ -2,7 +2,7 @@
 
 $cron_url = 'http://127.0.0.1:8000/cron/servicedatasync/vehicleposition';
 //$cron_url = 'https://research.busguiding.bertoferrero.com/cron/servicedatasync/vehicleposition';
-$waitTime = 3;
+$waitTime = 5;
 
 while (true) {
     $startTime = time();

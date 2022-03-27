@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 
@@ -31,20 +32,36 @@ class DevController extends AbstractController
     }
 
     /**
-     * @Route("/teststopsignaldriver")
+     * @Route("/teststopsignaldriver/{vehicle_id}")
      */
-    public function stopsignaldriver(EntityManagerInterface $em, NotificationManager $notificationManager): Response
+    public function stopsignaldriver(EntityManagerInterface $em, NotificationManager $notificationManager, $vehicle_id = null): Response
     {
-        $vehiclePosition = $em->find(VehiclePosition::class, 1);
+        $vehiclePosition = null;
+        if ($vehicle_id !== null) {
+            $vehiclePosition = $em->getRepository(VehiclePosition::class)->findOneBy(['schemaVehicleId' => trim($vehicle_id)]);
+        } else {
+            $vehiclePosition = $em->find(VehiclePosition::class, 1);
+        }
+        if ($vehiclePosition === null) {
+            return new Response('Vehiculo id no encontrado');
+        }
         $notificationManager->sendStopNotification($vehiclePosition);
         return new Response('ok');
     }
     /**
-     * @Route("/testdismissstopsignaldriver")
+     * @Route("/testdismissstopsignaldriver/{vehicle_id}")
      */
-    public function dismissstopsignaldriver(EntityManagerInterface $em, NotificationManager $notificationManager): Response
+    public function dismissstopsignaldriver(EntityManagerInterface $em, NotificationManager $notificationManager, $vehicle_id = null): Response
     {
-        $vehiclePosition = $em->find(VehiclePosition::class, 1);
+        $vehiclePosition = null;
+        if ($vehicle_id !== null) {
+            $vehiclePosition = $em->getRepository(VehiclePosition::class)->findOneBy(['schemaVehicleId' => trim($vehicle_id)]);
+        } else {
+            $vehiclePosition = $em->find(VehiclePosition::class, 1);
+        }
+        if ($vehiclePosition === null) {
+            return new Response('Vehiculo id no encontrado');
+        }
         $notificationManager->sendDismissStopNotification($vehiclePosition);
         return new Response('ok');
     }
