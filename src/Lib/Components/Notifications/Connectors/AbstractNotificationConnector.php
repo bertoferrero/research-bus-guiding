@@ -15,6 +15,8 @@ abstract class AbstractNotificationConnector{
     
     public function sendMessageAsync(array $devices, array $message){
         foreach ($devices as $device) {
+            /*$this->sendMessage($device, $message);
+            continue;*/
             $this->bus->dispatch(new NotificationConnectorMessage($device, $message));
         }
     }
