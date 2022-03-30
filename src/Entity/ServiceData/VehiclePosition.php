@@ -19,7 +19,6 @@ use Gedmo\Mapping\Annotation as Gedmo;
  * uniqueConstraints={
  *  @ORM\UniqueConstraint(name="vehicle_id", columns={"schema_vehicle_id"} )
  * })
- * @Gedmo\Loggable
  * @ORM\HasLifecycleCallbacks()
  */
 class VehiclePosition
@@ -33,44 +32,44 @@ class VehiclePosition
 
     /**
      * @ORM\Column(type="string", length=128)
-     * @Gedmo\Versioned
+     * 
      */
     private $schemaVehicleId;
 
     /**
      * @ORM\Column(type="float")
-     * @Gedmo\Versioned
+     * 
      */
     private $latitude;
 
     /**
      * @ORM\Column(type="float")
-     * @Gedmo\Versioned
+     * 
      */
     private $longitude;
 
     /**
      * @ORM\Column(type="string", length=128, nullable=true)
-     * @Gedmo\Versioned
+     * 
      */
     private $schemaTripId;
 
     /**
      * @ORM\Column(type="string", length=128, nullable=true)
-     * @Gedmo\Versioned
+     * 
      */
     private $schemaRouteId;
 
     /**
      * @ORM\Column(type="string", length=128, nullable=true)
-     * @Gedmo\Versioned
+     * 
      */
     private $schemaStopId;
 
     /**
      * @ORM\Column(type="VehiclePositionStatusEnum", nullable=true)
      * DoctrineAssert\Enum(entity="App\Lib\Enum\VehiclePositionStatusEnum")   
-     * @Gedmo\Versioned
+     * 
      */
     private $currentStatus;
 
