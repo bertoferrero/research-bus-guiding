@@ -29,7 +29,7 @@ use Trafiklab\Gtfs\Model\Entities\Frequency;
 class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
 {
 
-    public function executeSync():void
+    public function executeSync(): void
     {
         //https://github.com/trafiklab/gtfs-php-sdk
         //$feedUrl = "https://www.arcgis.com/sharing/rest/content/items/868df0e58fca47e79b942902dffd7da0/data"; //$this->params->get('app.gtfs.static.url');
@@ -163,9 +163,13 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
         $hundredFlush = 100;
         while ($calendarDateData = $calendarDates->next()) {
             //Search the main calendar entity
-            $calendar = $calendarRepo->findBySchemaId($calendarDateData->getServiceId(), true);
-            $calendar->setSchemaId($calendarDateData->getServiceId());
-            $this->em->persist($calendar);
+            $calendar = $calendarRepo->findBySchemaId($calendarDateData->getServiceId());
+            if ($calendar === null) {
+                $calendar = new Calendar();
+                $calendar->setSchemaId($calendarDateData->getServiceId());
+                $this->em->persist($calendar);
+                $this->em->flush();
+            }
 
             //Find anti collision
             $calendarDate = $calendarDateRepo->findOneBy(['schemaId' => $calendarDateData->getServiceId(), 'date' => $calendarDateData->getDate()]);
@@ -337,10 +341,16 @@ class GtfsStaticSynchronizer extends AbstractServiceDataSynchronizer
             $stopTime->setTrip($trip);
             $stop = $stopRepo->findBySchemaId($stopTimeData->getStopId());
             $stopTime->setStop($stop);
-            $stopTime->setArrivalTime(new DateTime($stopTimeData
-                ->getArrivalTime()));
-            $stopTime->setDepartureTime(new DateTime($stopTimeData
-                ->getDepartureTime()));
+            try {
+                $stopTime->setArrivalTime(new DateTime($stopTimeData
+                    ->getArrivalTime()));
+                $stopTime->setDepartureTime(new DateTime($stopTimeData
+                    ->getDepartureTime()));
+            } catch (Exception $ex) {
+                //It allows to prevent exception because of times higher than 24
+                //GTFS allows them but for this prototype it is ok avoiding them
+                continue;
+            }
             $stopTime->setschemaStopId($stopTimeData->getStopId());
             $stopTime->setStopSequence((int)$stopTimeData->getStopSequence());
             $this->em->persist($stopTime);
